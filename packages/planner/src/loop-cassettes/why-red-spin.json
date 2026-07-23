@@ -1,0 +1,119 @@
+{
+  "slug": "why-red-spin",
+  "question": "why did that turn red?",
+  "model": "claude-opus-4-8",
+  "recordedAt": "2026-07-23T08:16:36.888Z",
+  "outcome": {
+    "kind": "answered",
+    "modelCalls": 3,
+    "toolCalls": 2,
+    "prose": "It turned red because you dragged **spin** up to 1.8. Here's the chain the claim depends on: the claim \"under three\" checks whether **doubled** ≤ 3, and **doubled** is just spin doubled (1.8 → 3.6). Since 3.6 is greater than 3, the claim now fails — its gap is +0.6, on the wrong side.\n\nThe exact tipping point is spin = 1.5: at that value doubled hits exactly 3, and the claim just barely still holds. Any higher and doubled exceeds 3, so the badge flips to red. You crossed that line, which is why it went red. Drag spin back to 1.5 or below and it will turn green again."
+  },
+  "turns": [
+    {
+      "systemDigest": "3632da28a212",
+      "response": "I'll trace the dependency chain for the claim's verdict.\n\n```json\n{\"tool\": \"whyChanged\", \"id\": \"claim#1\"}\n```"
+    },
+    {
+      "systemDigest": "3632da28a212",
+      "response": "Let me find the exact threshold where the claim flips.\n\n```json\n{\"tool\": \"bisectFlip\", \"param\": \"parameter#1\", \"claim\": \"claim#1\", \"lo\": -2, \"hi\": 2}\n```"
+    },
+    {
+      "systemDigest": "3632da28a212",
+      "response": "It turned red because you dragged **spin** up to 1.8. Here's the chain the claim depends on: the claim \"under three\" checks whether **doubled** ≤ 3, and **doubled** is just spin doubled (1.8 → 3.6). Since 3.6 is greater than 3, the claim now fails — its gap is +0.6, on the wrong side.\n\nThe exact tipping point is spin = 1.5: at that value doubled hits exactly 3, and the claim just barely still holds. Any higher and doubled exceeds 3, so the badge flips to red. You crossed that line, which is why it went red. Drag spin back to 1.5 or below and it will turn green again."
+    }
+  ],
+  "acts": [
+    {
+      "call": {
+        "tool": "whyChanged",
+        "id": "claim#1"
+      },
+      "result": {
+        "ok": true,
+        "value": {
+          "chain": [
+            {
+              "id": "claim#1",
+              "kind": "claim",
+              "label": "under three",
+              "value": false
+            },
+            {
+              "id": "scalar#3",
+              "kind": "scalar",
+              "label": "gap",
+              "value": 0.6000000000000001
+            },
+            {
+              "id": "scalar#1",
+              "kind": "scalar",
+              "label": "doubled",
+              "value": 3.6
+            },
+            {
+              "id": "parameter#1",
+              "kind": "parameter",
+              "label": "spin",
+              "value": 1.8
+            }
+          ]
+        }
+      }
+    },
+    {
+      "call": {
+        "tool": "bisectFlip",
+        "param": "parameter#1",
+        "claim": "claim#1",
+        "lo": -2,
+        "hi": 2
+      },
+      "result": {
+        "ok": true,
+        "value": {
+          "flipped": true,
+          "lo": 1.5000000004947651,
+          "hi": 1.500000000509317,
+          "holdsAtLo": true,
+          "holdsAtHi": false,
+          "probes": 40
+        }
+      }
+    }
+  ],
+  "scene": {
+    "log": [
+      {
+        "kind": "program",
+        "source": "const spin = M.parameter(\"spin\", 1, { range: [-2, 2] });\nconst doubled = M.derived(() => 2 * spin.value, \"doubled\");\nconst under = M.claim({ lhs: doubled, rhs: 3, relation: \"<=\", label: \"under three\" });\nlesson.beat(\"An instrument\");\nlesson.expose(spin, { as: \"draggable\" });\nlesson.show(View.readout(doubled, { label: \"doubled\" }));\nlesson.show(View.claim(under));",
+        "js": "const spin = M.parameter(\"spin\", 1, { range: [-2, 2] });\nconst doubled = M.derived(() => 2 * spin.value, \"doubled\");\nconst under = M.claim({ lhs: doubled, rhs: 3, relation: \"<=\", label: \"under three\" });\nlesson.beat(\"An instrument\");\nlesson.expose(spin, { as: \"draggable\" });\nlesson.show(View.readout(doubled, { label: \"doubled\" }));\nlesson.show(View.claim(under));"
+      },
+      {
+        "kind": "event",
+        "event": {
+          "type": "set-input",
+          "target": "parameter#1",
+          "value": 1.8
+        }
+      }
+    ],
+    "feed": {
+      "moved": [
+        {
+          "target": "parameter#1",
+          "value": 1.8,
+          "label": "spin"
+        }
+      ],
+      "flipped": [
+        {
+          "id": "claim#1",
+          "label": "under three",
+          "from": true,
+          "to": false
+        }
+      ]
+    }
+  }
+}

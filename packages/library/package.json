@@ -1,0 +1,28 @@
+{
+  "name": "@math-ai/library",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "verify:build": "node verify/build.mjs",
+    "verify": "node verify/build.mjs && node verify/screenshot.mjs"
+  },
+  "dependencies": {
+    "@math-ai/core": "workspace:*",
+    "@math-ai/lesson": "workspace:*",
+    "@math-ai/render": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

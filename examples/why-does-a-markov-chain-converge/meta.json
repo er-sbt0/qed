@@ -1,0 +1,9 @@
+{
+  "question": "Why does a Markov chain converge to a stationary distribution?",
+  "discipline": "probability",
+  "title": "Convergence of Markov Chains to a Stationary Distribution",
+  "model": "claude-opus-4-8",
+  "recordedAt": "2026-07-22T19:34:19.240Z",
+  "cassette": "packages/planner/src/cassettes/why-does-a-markov-chain-converge.json",
+  "warnings": []
+}

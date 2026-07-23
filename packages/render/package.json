@@ -1,0 +1,30 @@
+{
+  "name": "@math-ai/render",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "demo:build": "node demo/build.mjs",
+    "verify": "node verify/screenshot.mjs",
+    "verify:seek": "node verify/seek.mjs"
+  },
+  "dependencies": {
+    "@math-ai/core": "workspace:*",
+    "@math-ai/lesson": "workspace:*",
+    "katex": "^0.16.47"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.7",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

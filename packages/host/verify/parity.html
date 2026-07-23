@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>@math-ai/host — THE QUICKJS GATE</title>
+<link rel="stylesheet" href="./katex.min.css" />
+<style>
+  body {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f2f3f7;
+    color: #1c2130;
+  }
+  [data-theme="dark"] body, body[data-dark] { background: #0d0f13; color: #e8eaf0; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 14px; margin: 28px 0 8px; }
+  button { font: inherit; padding: 2px 12px; margin-left: 10px; }
+  .demo-host { min-height: 120px; }
+  #degrade { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+  .deg-cell {
+    min-width: 84px; border-radius: 8px; padding: 8px 10px; font-size: 12px;
+    border: 1px solid rgba(0,0,0,.12); background: #fff;
+  }
+  [data-theme="dark"] .deg-cell { background: #171a21; border-color: rgba(255,255,255,.12); }
+  .deg-x { opacity: .6; font-size: 11px; }
+  .deg-v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .deg-s { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+  .deg-ok { border-left: 4px solid #1f9d55; }
+  .deg-frozen-interrupt, .deg-frozen-throw { border-left: 4px solid #d69e2e; background: #fdf6e3; }
+  [data-theme="dark"] .deg-frozen-interrupt, [data-theme="dark"] .deg-frozen-throw { background: #2a2410; }
+  .deg-clamped-nonfinite { border-left: 4px solid #e53e3e; background: #fdeaea; }
+  [data-theme="dark"] .deg-clamped-nonfinite { background: #2a1414; }
+  .deg-summary { width: 100%; margin-top: 6px; font-size: 13px; font-weight: 600; }
+</style>
+<script>
+  const theme = new URLSearchParams(location.search).get('theme');
+  if (theme) document.documentElement.dataset.theme = theme;
+  if (theme === 'dark') document.addEventListener('DOMContentLoaded', () => document.body.setAttribute('data-dark', ''));
+</script>
+</head>
+<body>
+  <h1>@math-ai/host — the spike beats, unmodified, through QuickJS-wasm</h1>
+  <h2>1 · Myhill–Nerode (spikes/myhill-nerode/beats.ts) <button id="run-nerode">run</button></h2>
+  <div id="nerode" class="demo-host"></div>
+  <h2>2 · Fundamental Theorem of Calculus (spikes/ftc/beats.ts) <button id="run-ftc">run</button></h2>
+  <div id="ftc" class="demo-host"></div>
+  <h2>3 · Determinant as oriented area (spikes/determinant/beats.ts) <button id="run-determinant">run</button></h2>
+  <div id="determinant" class="demo-host"></div>
+  <h2>4 · Graceful degradation — interrupt budget on the frame path <button id="run-degrade">run</button></h2>
+  <div id="degrade" class="demo-host"></div>
+  <script src="./main.js"></script>
+</body>
+</html>

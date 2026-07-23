@@ -1,0 +1,44 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": [
+      "node"
+    ],
+    "declaration": false,
+    "noEmit": true,
+    "allowJs": true,
+    "incremental": true,
+    "verbatimModuleSyntax": false,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "isolatedModules": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "//exclude": "Generated lesson programs, not app sources: they are authored against sandbox globals (lesson, Layout, …) and only ever compile inside compileProgram. verify/shots is where `verify --live` drops live-*.ts, which broke typecheck the first time anyone ran it.",
+  "exclude": [
+    "node_modules",
+    "verify/shots",
+    "verify/remount-shots"
+  ]
+}

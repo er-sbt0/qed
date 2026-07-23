@@ -1,0 +1,37 @@
+# Python virtual environments
+.venv/
+.venvtools/
+
+# Manim render output
+media/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Verify output — regenerate with `./run.sh gate` (which passes --shots).
+# These are evidence to eyeball, not artifacts to diff: committing them meant
+# every browser gate dirtied the tree with a few hundred KB of noise.
+#
+# LEADING SLASH, deliberately. `verify/shots/` (no leading slash, but with an
+# internal one) is anchored to THIS file's directory, so it covered the repo
+# root and nothing else — apps/web/verify/shots/ was never ignored at all, and
+# a `--live` run there dropped generated live-*.ts straight into `git add -A`.
+# Line 40 already spells out apps/web/ for remount-shots, i.e. this bit someone
+# once before. `**/` matches at any depth, which is what these rules meant.
+**/verify/shots/
+**/verify/shots-seek/
+
+# Node / TypeScript
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+coverage/
+.turbo/
+
+# Env files with secrets (keep *.example)
+.env
+.env*.local
+
+apps/web/verify/remount-shots/

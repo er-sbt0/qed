@@ -1,0 +1,15 @@
+{
+  "//": "WHICH programs the model is shown, and for which discipline. GENERATED-ISH: `./run.sh record \"<q>\"` rewrites this file — one entry per discipline, newest recording wins. Hand-editing is still fine. See README.md.",
+  "examples": [
+    {
+      "key": "probability",
+      "dir": "why-does-a-markov-chain-converge",
+      "title": "Convergence of Markov Chains to a Stationary Distribution"
+    },
+    {
+      "key": "graphs",
+      "dir": "why-is-a-graph-bipartite-if",
+      "title": "Bipartite graphs and odd cycles"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>@math-ai/library — THE PARITY GATE</title>
+<link rel="stylesheet" href="./katex.min.css" />
+<style>
+  body {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f2f3f7;
+    color: #1c2130;
+  }
+  [data-theme="dark"] body, body[data-dark] { background: #0d0f13; color: #e8eaf0; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 14px; margin: 28px 0 8px; }
+  button { font: inherit; padding: 2px 12px; margin-left: 10px; }
+  .demo-host { min-height: 120px; }
+</style>
+<script>
+  const theme = new URLSearchParams(location.search).get('theme');
+  if (theme) document.documentElement.dataset.theme = theme;
+  if (theme === 'dark') document.addEventListener('DOMContentLoaded', () => document.body.setAttribute('data-dark', ''));
+</script>
+</head>
+<body>
+  <h1>@math-ai/library — the engine fixture beats, unmodified</h1>
+  <!-- One section, because one engine-owned fixture: src/__fixtures__/nerode.
+       The numbering went away with the second program; add it back if a second
+       fixture ever earns a place here. -->
+  <h2>Myhill–Nerode (src/__fixtures__/nerode/beats.ts) <button id="run-nerode">run</button></h2>
+  <div id="nerode" class="demo-host"></div>
+  <script src="./main.js"></script>
+</body>
+</html>

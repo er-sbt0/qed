@@ -1,0 +1,40 @@
+{
+  "name": "@math-ai/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "verify": "node verify/screenshot.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@jitl/quickjs-singlefile-browser-release-sync": "^0.32.0",
+    "@math-ai/core": "workspace:*",
+    "@math-ai/host": "workspace:*",
+    "@math-ai/library": "workspace:*",
+    "@math-ai/planner": "workspace:*",
+    "@math-ai/render": "workspace:*",
+    "katex": "^0.16.47",
+    "next": "^15.1.0",
+    "quickjs-emscripten-core": "^0.32.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.7",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "esbuild": "^0.21.5",
+    "postcss": "^8.4.49",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.6.3"
+  }
+}

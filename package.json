@@ -1,0 +1,21 @@
+{
+  "name": "math-ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reactive Math Canvas — an LLM UX that answers with live, draggable math instead of video.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.61.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  }
+}

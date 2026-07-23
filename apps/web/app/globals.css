@@ -1,0 +1,1024 @@
+:root {
+  color-scheme: light;
+  --paper: #f7f8fb;
+  --panel: #ffffff;
+  --panel-2: #f0f2f8;
+  --ink: #1a2233;
+  --muted: #5b6577;
+  --faint: #6b7280;
+  --line: #e2e6ef;
+  --line-strong: #cfd5e4;
+  --accent: #0d9488;
+  --accent-strong: #0f766e;
+  --on-accent: #ffffff;
+  --good: #15926a;
+  --good-bg: #e2f5ec;
+  --bad: #d13b3b;
+  --bad-bg: #fbe6e6;
+  --shadow: 0 1px 2px rgba(20, 30, 50, 0.05), 0 8px 24px rgba(20, 30, 50, 0.06);
+  --mono: var(--font-jetbrains-mono), ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Dark palette. Applies when the theme toggle sets data-theme='dark' on
+   <html>. Light is the default when no saved preference exists. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #0e1320;
+  --panel: #161d2e;
+  --panel-2: #1c2438;
+  --ink: #e6ebf5;
+  --muted: #97a1b8;
+  --faint: #8b96ad;
+  --line: #2b3852;
+  --line-strong: #3d4d70;
+  --accent: #2dd4bf;
+  --accent-strong: #2dd4bf;
+  --on-accent: #0e1320;
+  --good: #46d39f;
+  --good-bg: #16302a;
+  --bad: #f0736f;
+  --bad-bg: #34191c;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* ---- app shell: sidebar + main ---- */
+.app {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px 18px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 11px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.nav-item:hover {
+  color: var(--ink);
+  background: var(--panel-2);
+}
+.nav-item[aria-current='page'] {
+  color: var(--ink);
+  background: var(--panel-2);
+}
+.nav-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.nav-ico {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--accent);
+}
+.sidebar-foot {
+  margin-top: auto;
+}
+
+.recent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.recent .eyebrow {
+  margin: 0 0 2px;
+  padding: 0 11px;
+}
+.recent-empty {
+  color: var(--faint);
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0 11px;
+}
+.recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.recent-item {
+  font-weight: 500;
+  font-size: 13px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.main {
+  min-width: 0;
+}
+.main-inner {
+  /* A lesson stage is a semantic LAYOUT — typically a visual column beside a
+     narration column — so it needs far more room than the 820px that suited a
+     single scene canvas. Prose blocks keep their own ch-based max-widths, so
+     widening the shell does not hurt readability. */
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 34px 26px 60px;
+}
+
+/* ---- focused answer stage ---- */
+.stage {
+  margin-top: 8px;
+}
+.stage-head {
+  margin: 0 0 16px;
+}
+.stage-q {
+  font-size: clamp(19px, 2.4vw, 24px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 650;
+  margin: 4px 0 0;
+  max-width: 42ch;
+}
+
+/* ---- thinking indicator ---- */
+.thinking {
+  display: flex;
+  gap: 7px;
+  padding: 24px 2px;
+}
+.thinking span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.4;
+  animation: thinking-bounce 1.2s ease-in-out infinite;
+}
+.thinking span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.thinking span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes thinking-bounce {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+}
+
+/* ---- brand ---- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+/* ---- responsive: collapse sidebar above the content ---- */
+@media (max-width: 760px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    flex-direction: column;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 16px 18px;
+  }
+  .recent-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .recent-item {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+    max-width: 220px;
+  }
+  .main-inner {
+    padding: 26px 20px 48px;
+  }
+}
+.glyph {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 7px;
+  padding: 3px 8px;
+  line-height: 1;
+}
+h1 {
+  font-size: clamp(20px, 3vw, 26px);
+  margin: 0;
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 6px;
+}
+.sub {
+  color: var(--muted);
+  font-size: 14.5px;
+  margin: 0 0 14px;
+  max-width: 52ch;
+}
+
+/* ---- follow-up turns: read-only questions about the scene on screen ---- */
+.followups {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.followup-turn {
+  margin-bottom: 14px;
+}
+.followup-q {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.followup-q::before {
+  content: '\201C';
+  color: var(--accent);
+}
+.followup-q::after {
+  content: '\201D';
+  color: var(--accent);
+}
+.followup-a {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.followup-ask {
+  display: flex;
+  gap: 8px;
+}
+.followup-ask input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 9px 12px;
+  outline: none;
+}
+.followup-ask input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* ---- ask panel ---- */
+.ask {
+  margin-bottom: 26px;
+}
+.ask form {
+  display: flex;
+  gap: 8px;
+}
+.ask input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 11px 14px;
+  outline: none;
+}
+.ask input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.ask button[type='submit'] {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent-strong);
+  border: 0;
+  border-radius: 10px;
+  padding: 0 20px;
+  cursor: pointer;
+}
+.ask button[type='submit']:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.ask button[type='submit']:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.chip {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+.chip:hover:not(:disabled) {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.error {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+.warn {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 12px 0 0;
+}
+.examples {
+  margin-top: 30px;
+}
+.examples .eyebrow {
+  margin-bottom: 4px;
+}
+.examples-sub {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 0 0 14px;
+}
+.answer + .examples {
+  margin-top: 30px;
+}
+
+/* ---- scene tabs ---- */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+.tab {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.tab:hover {
+  color: var(--ink);
+}
+.tab[aria-selected='true'] {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- answer card ---- */
+.answer {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 20px 22px 22px;
+}
+.answer-title {
+  font-size: 20px;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+  font-weight: 640;
+}
+.answer-blurb {
+  color: var(--muted);
+  font-size: 14.5px;
+  margin: 0 0 18px;
+  max-width: 64ch;
+}
+.answer-blurb code,
+.note code {
+  overflow-wrap: anywhere;
+}
+
+/* ---- the scene (styling the engine's data-attributes) ---- */
+[data-math-scene] canvas {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+/* on-canvas labels: a KaTeX overlay positioned over the canvas */
+[data-math-stage] {
+  position: relative;
+}
+[data-math-labels] {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 12px;
+}
+[data-math-labels] > span {
+  position: absolute;
+  white-space: nowrap;
+  line-height: 1;
+  font-size: 14.5px;
+}
+[data-math-labels] > span[data-align='start'] {
+  transform: translateY(-50%);
+}
+[data-math-labels] > span[data-align='middle'] {
+  transform: translate(-50%, -50%);
+}
+[data-math-labels] .katex {
+  color: inherit;
+  font-size: 1.05em;
+}
+
+[data-math-controls] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+[data-math-slider] {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 11px;
+}
+[data-math-slider] span {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+[data-math-slider] output {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+  text-align: right;
+}
+[data-math-slider] input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--line-strong);
+  outline: none;
+}
+[data-math-slider] input[type='range']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+[data-math-slider] input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+[data-math-slider] input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  cursor: pointer;
+}
+
+[data-math-readouts] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+[data-math-readouts] > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+[data-math-readouts] dt {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+[data-math-readouts] dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+[data-math-check] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+[data-math-check-label] {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  flex: none;
+}
+[data-math-check-status] {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+[data-math-check-value] {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+[data-math-check][data-good='true'] {
+  background: var(--good-bg);
+  border-color: transparent;
+}
+[data-math-check][data-good='true'] [data-math-check-label] {
+  color: var(--good);
+}
+[data-math-check][data-kind='invariant'][data-good='false'] {
+  background: var(--bad-bg);
+  border-color: transparent;
+}
+[data-math-check][data-kind='invariant'][data-good='false'] [data-math-check-label] {
+  color: var(--bad);
+}
+
+/* ---- footer ---- */
+.note {
+  margin-top: 22px;
+  color: var(--faint);
+  font-size: 12.5px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+/* ---- answer footer: secondary actions (program source toggle) ---- */
+.answer-foot {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- example provenance: kept honest, rendered quiet ---- */
+.example-src {
+  color: var(--faint);
+  font-size: 12.5px;
+  margin: 0 0 18px;
+}
+.example-src code {
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+/* ---- theme toggle glyph: fixed-width box so ◐/☀/☾ align with nav icons ---- */
+.theme-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  color: var(--accent);
+}
+.theme-glyph svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.note b {
+  color: var(--muted);
+}
+
+/* ---- artifact (one interactive unit; several may stack in one answer) ---- */
+[data-math-artifact] {
+  margin-top: 6px;
+}
+[data-math-artifact] + [data-math-artifact] {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+[data-math-artifact-title] {
+  font-size: 18px;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+  font-weight: 640;
+}
+[data-math-artifact-blurb] {
+  color: var(--muted);
+  font-size: 14.5px;
+  margin: 0 0 16px;
+  max-width: 64ch;
+}
+
+/* ---- narrative step-player ---- */
+[data-math-narrative-head] {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+[data-math-narrative-progress] {
+  font: 600 11.5px/1 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+[data-math-narrative-title] {
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: -0.01em;
+  font-weight: 640;
+}
+[data-math-narrative-text] {
+  color: var(--muted);
+  font-size: 14.5px;
+  margin: 0 0 16px;
+  max-width: 64ch;
+}
+[data-math-narrative-nav] {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+[data-math-narrative-nav] button {
+  font: 600 13px/1 var(--sans);
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+[data-math-narrative-nav] button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+[data-math-narrative-nav] button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---- the lesson canvas (milestone 7: a program, not a scene) ----
+   The render package styles the stage itself through its own theme CSS
+   (`ensureTheme`); everything here is the chrome AROUND it: run state, replay,
+   the diagnostic, and the program source. */
+.lesson-stage {
+  min-height: 240px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  padding: 16px;
+  overflow-x: auto;
+}
+.lesson-stage[data-state='booting'],
+.lesson-stage[data-state='authoring'],
+.lesson-stage[data-state='seeking'] {
+  opacity: 0.6;
+}
+.lesson {
+  outline: none;
+}
+
+/* ---- the beat navigator ----
+   A lesson now plays one beat at a time and waits. This is the student's
+   place in the explanation (`step N of M` + the beat's own title), the run
+   state, the rail they can jump around with, and the transport. Forward
+   jumps ride the live player; backward jumps re-author, which is why every
+   tick disables while busy.
+
+   It all sits ABOVE the stage: the stage is as tall as the beat it happens
+   to be drawing, so chrome placed under it slides around between beats. */
+.lesson-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.lesson-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 32px;
+}
+.lesson-beat {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+}
+.lesson-count {
+  font: 600 11px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.lesson-title {
+  font: 640 15px/1.3 var(--sans);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.lesson-rail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lesson-rail li {
+  flex: 1 1 0;
+  min-width: 14px;
+}
+.lesson-tick {
+  display: block;
+  width: 100%;
+  padding: 7px 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  appearance: none;
+}
+.lesson-tick-bar {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line-strong);
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+.lesson-tick:hover:not(:disabled) .lesson-tick-bar {
+  background: color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+  transform: scaleY(1.5);
+}
+.lesson-tick[data-done] .lesson-tick-bar {
+  background: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+}
+.lesson-tick[aria-current='step'] .lesson-tick-bar {
+  background: var(--accent);
+  transform: scaleY(1.75);
+}
+.lesson-tick:disabled {
+  cursor: default;
+}
+.lesson-tick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.lesson-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.lesson-step-btn {
+  font: 600 13px/1 var(--sans);
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 7px 13px;
+  cursor: pointer;
+}
+.lesson-step-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lesson-step-next:not(:disabled) {
+  color: var(--on-accent);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+.lesson-step-next:hover:not(:disabled) {
+  color: var(--on-accent);
+  filter: brightness(1.06);
+}
+.lesson-step-btn:disabled,
+.lesson-replay:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* The run state is a pill; 'paused' is the actionable one — the student can
+   drag the scene or step forward — so it gets the accent treatment. */
+.lesson-state {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+.lesson-state[data-state='paused'] {
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+.lesson-state[data-state='done'] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+.lesson-state[data-state='failed'] {
+  color: var(--bad);
+}
+.lesson-replay {
+  font: 600 13px/1 var(--sans);
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.lesson-replay:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lesson-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--bad);
+  font-family: var(--mono, ui-monospace, monospace);
+}
+.repair {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel-2);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.repair p {
+  margin: 0;
+  flex: 1 1 260px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.repair .error {
+  flex-basis: 100%;
+  margin: 0;
+}
+.program {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font: 12.5px/1.55 var(--mono, ui-monospace, monospace);
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 480px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking span {
+    animation: none;
+    opacity: 1;
+  }
+  .lesson-tick-bar {
+    transition: none;
+  }
+}

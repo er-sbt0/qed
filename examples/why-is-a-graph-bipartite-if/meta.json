@@ -1,0 +1,9 @@
+{
+  "question": "Why is a graph bipartite if and only if it contains no odd cycle?",
+  "discipline": "graphs",
+  "title": "Bipartite graphs and odd cycles",
+  "model": "claude-opus-4-8",
+  "recordedAt": "2026-07-22T19:35:00.449Z",
+  "cassette": "packages/planner/src/cassettes/why-is-a-graph-bipartite-if.json",
+  "warnings": []
+}

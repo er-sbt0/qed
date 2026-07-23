@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>@math-ai/render — milestone 3 demos</title>
+<link rel="stylesheet" href="./katex.min.css" />
+<style>
+  body {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f2f3f7;
+    color: #1c2130;
+  }
+  [data-theme="dark"] body, body[data-dark] { background: #0d0f13; color: #e8eaf0; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 14px; margin: 28px 0 8px; }
+  button { font: inherit; padding: 2px 12px; margin-left: 10px; }
+  .demo-host { min-height: 120px; }
+</style>
+<script>
+  // theme toggle for verification: ?theme=dark
+  const theme = new URLSearchParams(location.search).get('theme');
+  if (theme) document.documentElement.dataset.theme = theme;
+  if (theme === 'dark') document.addEventListener('DOMContentLoaded', () => document.body.setAttribute('data-dark', ''));
+</script>
+</head>
+<body>
+  <h1>@math-ai/render — milestone 3</h1>
+  <h2>1 · The collapse <button id="run1">run</button></h2>
+  <div id="demo1" class="demo-host"></div>
+  <h2>2 · The machine <button id="run2">run</button></h2>
+  <div id="demo2" class="demo-host"></div>
+  <h2>3 · Stationarity <button id="run3">run</button></h2>
+  <div id="demo3" class="demo-host"></div>
+  <h2>4 · The shrinking strip <button id="run4">run</button></h2>
+  <div id="demo4" class="demo-host"></div>
+  <script src="./main.js"></script>
+</body>
+</html>

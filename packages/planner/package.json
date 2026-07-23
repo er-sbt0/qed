@@ -1,0 +1,32 @@
+{
+  "name": "@math-ai/planner",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./examples": "./src/examples.generated.ts",
+    "./plan": "./src/plan.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build:examples": "node scripts/build-examples.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.3",
+    "@math-ai/host": "workspace:*",
+    "esbuild": "^0.21.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@math-ai/core": "workspace:*",
+    "@math-ai/library": "workspace:*",
+    "@math-ai/render": "workspace:*",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
