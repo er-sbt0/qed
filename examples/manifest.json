@@ -10,6 +10,11 @@
       "key": "graphs",
       "dir": "why-is-a-graph-bipartite-if",
       "title": "Bipartite graphs and odd cycles"
+    },
+    {
+      "key": "topology",
+      "dir": "coordinate-rack-tychonoff",
+      "title": "The Coordinate Rack — Tychonoff Scene I"
     }
   ]
 }

@@ -243,6 +243,9 @@ export const THEME_CSS = `
    a wide stage does not blow up to something absurd. 640px is ~2x the widest
    provider's logical width (plot's 320). */
 .mr-plotsvg { overflow: hidden; display: block; width: 100%; height: auto; max-width: 640px; }
+/* The geometry escape hatch is often a wide figure (a coordinate rack, a long
+   axis) — it claims the space it needs rather than being capped to a plot box. */
+.mr-plotsvg.mr-diagram-svg { max-width: 1040px; }
 .mr-plotsvg .mr-axis { stroke: var(--mr-line); stroke-width: 1.2; fill: none; }
 .mr-plotsvg .mr-tick { stroke: var(--mr-line); stroke-width: 1; }
 .mr-plotsvg .mr-tick-label { font-size: 9.5px; fill: var(--mr-muted); font-family: ui-monospace, monospace; }
