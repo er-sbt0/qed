@@ -23,6 +23,7 @@ import type { Formula, NumericHandle, Verdict } from '@math-ai/lesson';
 import {
   BarsView,
   ClaimView,
+  DiagramView,
   FieldView,
   HeatmapView,
   LoopView,
@@ -46,7 +47,7 @@ import {
   fmt,
   plainTex,
 } from '@math-ai/render';
-import type { ClaimSubject, Stage, TilingEdgeRef } from '@math-ai/render';
+import type { ClaimSubject, DiagramPen, Stage, TilingEdgeRef } from '@math-ai/render';
 import type { Partition, StateMachine, Word } from './automata.js';
 import type { Graph, GraphEdge, LiveSpanningTree } from './graph.js';
 import type { Distribution, MarkovChain, StochasticMatrix } from './probability.js';
@@ -166,6 +167,28 @@ export interface ViewLib {
       readonly label?: string;
     },
   ): FieldView;
+  /**
+   * The geometry ESCAPE HATCH: an open canvas the program draws low-level marks
+   * on — point · path · text · glyph — in MATH-SPACE coordinates of a declared
+   * frame. `draw` reads LiveValues (a Parameter) and is re-run on every repaint,
+   * so a mark that depends on a dragged parameter moves with it. No pixels ever
+   * appear in `draw`; the frame owns the pixel mapping, ticks and fit. This is
+   * the bottom tier the hand-written `View.*` renderers sit above — reach for it
+   * when no view fits the idea.
+   */
+  diagram(
+    frameSpec: {
+      readonly domain: readonly [number, number];
+      readonly range: readonly [number, number];
+      readonly width?: number;
+      readonly height?: number;
+      readonly pad?: number;
+      /** Default column count for `pen.col(k)`. */
+      readonly cols?: number;
+    },
+    draw: (pen: DiagramPen) => void,
+    opts?: { readonly label?: string },
+  ): DiagramView;
   /**
    * A scalar field as a colored cell grid — where a quantity is positive,
    * negative, and strong. `View.heatmap(Field.curl(F))` is the picture of
@@ -603,6 +626,12 @@ export function createViews(stage: Stage): { View: ViewLib; Layout: LayoutLib } 
         label: opts?.label ?? F.label,
         subject: F,
       });
+      tagLabel(view, opts?.label);
+      return view;
+    },
+
+    diagram(frameSpec, draw, opts) {
+      const view = new DiagramView(stage, { frame: frameSpec, draw, label: opts?.label });
       tagLabel(view, opts?.label);
       return view;
     },

@@ -64,6 +64,21 @@ export { VectorsView } from './views/vectors.js';
 export type { VectorsSpec, VectorRef } from './views/vectors.js';
 export { FieldView } from './views/field.js';
 export type { FieldSpec, FieldSample } from './views/field.js';
+export { DiagramView } from './views/diagram.js';
+export type {
+  DiagramSpec,
+  DiagramFrameSpec,
+  DiagramPen,
+  DiagramMark,
+  MarkRole,
+  MarkOpts,
+  PointOpts,
+  PathOpts,
+  TextOpts,
+  GlyphOpts,
+  GlyphKind,
+  MathBand,
+} from './views/diagram.js';
 export { HeatmapView } from './views/heatmap.js';
 export type { HeatmapSpec, HeatmapCell } from './views/heatmap.js';
 export { LoopView, edgePath } from './views/loop.js';
