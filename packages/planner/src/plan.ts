@@ -32,7 +32,9 @@ import { z } from 'zod/v4';
  * library behind it — where "library" includes another pack's primitives with
  * a worked example on top: `abstract-algebra` ships no pack of its own, it is
  * the automata kernel plus the dihedral example (docs/probe-algebra.md), and
- * what the key actually selects is the example (see prompts.ts).
+ * `topology` likewise ships no pack — it is the geometry kernel (the
+ * `View.diagram` escape hatch) plus the coordinate-rack example. What the key
+ * actually selects is the example (see prompts.ts).
  */
 export const DISCIPLINES = [
   'automata',
@@ -41,6 +43,7 @@ export const DISCIPLINES = [
   'linear-algebra',
   'abstract-algebra',
   'graphs',
+  'topology',
 ] as const;
 export type Discipline = (typeof DISCIPLINES)[number];
 
