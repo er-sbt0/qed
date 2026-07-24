@@ -7,9 +7,9 @@
 #
 # Usage:
 #   ./run.sh            # start the web app in dev mode (http://localhost:3000)
-#   ./run.sh dev [port] # dev server on an optional port
+#   ./run.sh dev [port] # dev server on an optional port (or set $PORT)
 #   ./run.sh build      # production build of the web app
-#   ./run.sh start [port]  # serve the production build
+#   ./run.sh start [port]  # serve the production build (or set $PORT)
 #   ./run.sh test       # run all package unit tests (~5s — the inner loop)
 #   ./run.sh typecheck  # strict tsc --noEmit across packages
 #   ./run.sh examples   # re-inline examples/ into the prompt (free)
@@ -85,7 +85,8 @@ shift || true
 
 case "$cmd" in
   dev)
-    port="${1:-3000}"
+    # Port precedence: positional arg > $PORT > 3000.
+    port="${1:-${PORT:-3000}}"
     echo "• starting dev server on http://localhost:$port"
     exec pnpm --filter @math-ai/web exec next dev -p "$port"
     ;;
@@ -93,7 +94,8 @@ case "$cmd" in
     exec pnpm --filter @math-ai/web build
     ;;
   start)
-    port="${1:-3000}"
+    # Port precedence: positional arg > $PORT > 3000.
+    port="${1:-${PORT:-3000}}"
     echo "• serving production build on http://localhost:$port"
     exec pnpm --filter @math-ai/web exec next start -p "$port"
     ;;
