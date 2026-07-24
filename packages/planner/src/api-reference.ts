@@ -531,6 +531,33 @@ declare const View: {
     readonly range?: readonly [number, number];
     readonly cellsMode?: "shown" | "deferred";
   }): TilingView;
+
+  /** THE GEOMETRY ESCAPE HATCH — the open bottom tier. When NO semantic view
+   *  above fits the idea, draw the figure yourself: \`draw\` is handed a \`pen\`
+   *  and emits low-level marks in MATH-SPACE coordinates of the declared frame.
+   *  Reach for a semantic view first; drop to this when none says what you mean.
+   *
+   *  \`draw\` is RE-RUN on every repaint, so a Parameter / M.derived read INSIDE
+   *  it moves the marks under a drag or vary with NO wiring — exactly like a
+   *  field's live rule. Two laws:
+   *    · Coordinates are MATH-SPACE in the frame (frame.x/pen.col/a value on a
+   *      band). NEVER a pixel — the frame owns the pixel mapping and the fit.
+   *    · Mark SIZES are pixels (r/size/text size): a dot must not scale with the
+   *      domain. "No pixels" means no pixel COORDINATES, not no pixel sizes.
+   *
+   *  \`label\` is TeX (a KaTeX caption above the figure). \`cols\` sets the default
+   *  n for pen.col(k). The figure claims the width it is given (docs/visual.md);
+   *  a wide diagram is expected, not a thumbnail. */
+  diagram(
+    frame: {
+      readonly domain: readonly [number, number];
+      readonly range: readonly [number, number];
+      readonly width?: number; readonly height?: number; readonly pad?: number;
+      readonly cols?: number;
+    },
+    draw: (pen: DiagramPen) => void,
+    opts?: { readonly label?: string },
+  ): DiagramView;
 };
 
 === View handle kinds and SUBPART accessors (correspondences attach here) ===
@@ -548,9 +575,62 @@ interface HeatmapView  extends Handle<"view:heatmap"> {}
 interface LoopView     extends Handle<"view:loop"> {}
 interface TilingView   extends Handle<"view:tiling"> {}
 interface ClaimView    extends Handle<"view:claim"> {}
+interface DiagramView  extends Handle<"view:diagram"> {}
 interface LayoutContainerView extends Handle<"view:columns" | "view:stack" | "view:overlay"> {
   readonly children: readonly Handle[];
 }
+
+// The pen handed to a View.diagram draw closure. Coordinate helpers speak
+// MATH-SPACE (the frame owns pixels); emit methods take MATH coordinates.
+// role colours carry meaning (docs/visual.md): free=amber, constraint=blue,
+// escape=green, reject=red, neutral=grey. Reach for an idiom (band/marker)
+// first; drop to the kernel (point/path/text/glyph) when none fits.
+type MarkRole = "free" | "constraint" | "escape" | "reject" | "neutral";
+type MarkerState = "free" | "constrained" | "violated" | "plain";  // -> role, for pen.marker
+interface MathBand { readonly center: number; readonly lo: number; readonly hi: number; readonly width: number }
+interface DiagramPen {
+  // ── math-space helpers (no pixels) ──
+  col(k: number, n?: number): number;                     // math-x of column k of n
+  bands(count: number, opts?: { readonly padding?: number; readonly recede?: number }): readonly MathBand[];
+  // recede in (0,1): successive bands shrink geometrically — the "forever" tail
+  xTicks(target?: number): number[];                      // nice-number ticks across x
+  yTicks(target?: number): number[];
+  // ── the kernel: emit marks in MATH coordinates ──
+  point(x: number, y: number, opts?: { readonly role?: MarkRole; readonly r?: number; readonly under?: Handle }): void;
+  path(points: ReadonlyArray<readonly [number, number]>,
+       opts?: { readonly role?: MarkRole; readonly closed?: boolean; readonly fill?: boolean; readonly under?: Handle }): void;
+  text(x: number, y: number, str: string,
+       opts?: { readonly role?: MarkRole; readonly anchor?: "start" | "middle" | "end"; readonly size?: number }): void;
+  glyph(x: number, y: number, kind: "dot" | "cross" | "ring" | "arrow",
+        opts?: { readonly role?: MarkRole; readonly size?: number; readonly angle?: number; readonly under?: Handle }): void;
+  // ── idioms above the kernel ──
+  band(x: number, opts?: {                                 // a soft vertical cell (not a bare line)
+    readonly role?: MarkRole; readonly width?: number; readonly y0?: number; readonly y1?: number;
+    readonly fill?: boolean; readonly under?: Handle;
+  }): void;
+  marker(x: number, y: number, opts?: {                    // a point dot coloured by semantic STATE
+    readonly state?: MarkerState; readonly size?: number; readonly under?: Handle;
+  }): void;
+}
+
+// THE ESCAPE HATCH, worked — a figure no semantic view could draw: the product
+// space {0,1}^N as a rack of coordinate cells, the count finite in the product
+// topology and ∞ in the box. The vary IS the proof — the count and the claim
+// move because draw re-reads box.value every repaint.
+const box = M.parameter("box (0=product, 1=box)", 0, { range: [0, 1] });
+const clamped = M.derived(() => (box.value >= 0.5 ? Infinity : 2), "clamped coordinates");
+const rack = View.diagram({ domain: [0, 1], range: [0, 1], cols: 7 }, (pen) => {
+  pen.bands(7, { recede: 0.86 }).forEach((c, k) => {                 // receding columns
+    const pinned = box.value >= 0.5 || k === 1 || k === 4;
+    pen.band(c.center, { width: c.width, role: pinned ? "constraint" : "free" });
+    pen.marker(c.center, 0.6, { state: pinned ? "constrained" : "free" });
+  });
+  pen.text(0.5, 0.85, box.value >= 0.5 ? "∞" : "2", { size: 52, role: box.value >= 0.5 ? "reject" : "neutral" });
+}, { label: "\\{0,1\\}^{\\mathbb{N}}" });
+lesson.show(rack);
+lesson.show(View.claim(M.claim({ predicate: () => Number.isFinite(clamped.value),
+                                 label: "the open set pins only finitely many coordinates" })));
+lesson.vary(box, { to: 1 });   // every cell clamps, count -> ∞, the claim BREAKS: Tychonoff dies
 
 interface FormulaView extends Handle<"view:formula"> {
   readonly formula: Formula;
