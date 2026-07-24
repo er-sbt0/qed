@@ -153,6 +153,16 @@ world, which is strictly better for LLM repair than inspecting static data.
                          composes from the kernel when it doesn't
 ```
 
+> **Status note (2026-07-24): the bottom tier was never built.** The renderer
+> tier shipped as a *closed* registry of ~22 `View.*` constructors; the
+> `point · path · text · glyph · frame` geometry kernel — and with it the
+> escape hatch of locked-item #6 — does not exist yet, and figures are a fixed
+> 320×220 with no tick/nice-number/band logic. Finishing this tier is the active
+> visual work; `docs/visual.md` carries the plan (the `View.diagram` escape hatch
+> + a real frame layer, proven by a hand-authored lesson through QuickJS). This
+> is the one place below where the decided design describes something the present
+> engine lacks.
+
 The failure mode this avoids: if the LLM's only nouns are `Math.markovChain` and
 `View.stateGraph`, a discipline nobody anticipated is *unsayable* — the
 Myhill–Nerode bug, one level up. A composition that works becomes the library
