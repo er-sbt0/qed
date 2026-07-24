@@ -93,11 +93,12 @@ add coverage the fixture cannot express, or add it as a unit test.
 
 ## Where the prose lives
 
-This file is the live entry point and the only one kept current. `docs/README.md`
-indexes the rest and says, per document, whether to believe it: `architecture.md`
-and `renderer-backends.md` are current, and everything under `docs/archive/` is
-kept for the reasoning that produced a decision, not as a description of the
-system or as a backlog. The root no longer holds planning prose.
+This file is the live entry point and the only one kept current. `docs/` now
+holds two files: `docs/visual.md` — the single live direction (make the LLM
+author beautiful, essence-carrying math figures) — and `docs/architecture.md`,
+which describes the engine as it is. Where the two disagree, `visual.md` is the
+intent and `architecture.md` the present. The old planning docs (vision,
+roadmap, direction) were deleted; git has them. The root holds no planning prose.
 
 ## Node is not on PATH
 
