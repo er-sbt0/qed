@@ -17,7 +17,7 @@
 import type { Handle } from '@math-ai/core';
 import type { NumericHandle, VarySettable } from '@math-ai/lesson';
 import type { Stage } from '../stage.js';
-import { FramedView, SVG_NS, createFrame, polyline, rangeOf, svgLayer } from './frame.js';
+import { FramedView, SVG_NS, createFrame, drawTicks, polyline, rangeOf, svgLayer } from './frame.js';
 import type { CoordFrame } from './frame.js';
 import { renderTex } from '../tex.js';
 
@@ -110,6 +110,7 @@ export class PlotView extends FramedView {
       );
       axes.classList.add('mr-axis');
       svg.appendChild(axes);
+      drawTicks(doc, svg, f, { atX: f.x(f.domain[0]), atY: y0 });
       // the drag rail is the x-axis: registered so Interaction.drag can find it
       const rail = doc.createElementNS(SVG_NS, 'rect');
       rail.setAttribute('x', String(f.pad));

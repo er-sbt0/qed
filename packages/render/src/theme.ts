@@ -59,12 +59,19 @@ export const THEME_CSS = `
   border-radius: 14px;
   padding: 16px;
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
   align-items: stretch;
   position: relative;
 }
 .mr-canvas {
-  flex: 1 1 auto;
+  /* The figure is the artifact: it claims the row first. A generous basis
+     (bigger than the narration's) means that on anything narrower than
+     roughly basis+basis+gap the pair wraps — narration drops BELOW the
+     figure, rather than always sitting in a fixed side column that caps how
+     wide a figure is allowed to grow. On a wide stage there is still room for
+     both side by side, unchanged from before. */
+  flex: 3 1 480px;
   display: flex;
   flex-wrap: wrap;
   gap: 18px;
@@ -84,8 +91,8 @@ export const THEME_CSS = `
   min-width: 0;
 }
 .mr-narration {
-  flex: 0 1 340px;
-  min-width: 260px;
+  flex: 1 1 280px;
+  min-width: 220px;
   background: none;
   border: 0;
   border-left: 1px solid var(--mr-line);
@@ -223,9 +230,16 @@ export const THEME_CSS = `
 .mr-history .mr-axis { stroke: var(--mr-line); stroke-width: 1; }
 .mr-history text { font-size: 10px; fill: var(--mr-muted); }
 
-/* continuous views: plot / region / strip / riemann / plane / vectors */
-.mr-plotsvg { overflow: hidden; display: block; }
+/* continuous views: plot / region / strip / riemann / plane / vectors
+   The figure fills the space its panel is given: the SVG's viewBox keeps the
+   logical (mapping) dimensions frame.ts computed with, but width/height here
+   let it grow with its container — up to a generous cap so a lone figure in
+   a wide stage does not blow up to something absurd. 640px is ~2x the widest
+   provider's logical width (plot's 320). */
+.mr-plotsvg { overflow: hidden; display: block; width: 100%; height: auto; max-width: 640px; }
 .mr-plotsvg .mr-axis { stroke: var(--mr-line); stroke-width: 1.2; fill: none; }
+.mr-plotsvg .mr-tick { stroke: var(--mr-line); stroke-width: 1; }
+.mr-plotsvg .mr-tick-label { font-size: 9.5px; fill: var(--mr-muted); font-family: ui-monospace, monospace; }
 .mr-curve { fill: none; stroke: var(--mr-accent); stroke-width: 2.2; stroke-linejoin: round; }
 .mr-backdrop { fill: none; stroke: var(--mr-muted); stroke-width: 1.4; opacity: 0.35; }
 .mr-plot-label { font-size: 11px; fill: var(--mr-muted); }

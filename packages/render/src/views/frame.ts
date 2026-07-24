@@ -45,6 +45,12 @@ export interface CoordFrame {
    * provider has no curve (a coordinate plane).
    */
   backdrop(): string;
+  /** Nice-number tick values across the domain (x-axis), honest to look at. */
+  xTicks(target?: number): number[];
+  /** Nice-number tick values across the range (y-axis). */
+  yTicks(target?: number): number[];
+  /** `count` evenly-spaced vertical bands across the inner pixel width. */
+  bands(count: number, opts?: BandOpts): readonly Band[];
 }
 
 export interface FrameOpts {
@@ -52,6 +58,18 @@ export interface FrameOpts {
   readonly height?: number;
   readonly pad?: number;
   readonly backdrop?: () => string;
+}
+
+export interface Band {
+  readonly center: number;
+  readonly lo: number;
+  readonly hi: number;
+  readonly width: number;
+}
+
+export interface BandOpts {
+  /** Fraction of each slot reserved as the gap between bands (0..1). Default 0.2. */
+  readonly padding?: number;
 }
 
 export function createFrame(
@@ -78,7 +96,91 @@ export function createFrame(
     y: (v: number): number => height - pad - ((v - r0) / rSpan) * innerH,
     toDomain: (px: number): number => d0 + ((px - pad) / innerW) * dSpan,
     backdrop: opts.backdrop ?? ((): string => ''),
+    xTicks: (target = 5): number[] => niceTicks(domain[0], domain[1], target),
+    yTicks: (target = 5): number[] => niceTicks(range[0], range[1], target),
+    bands: (count: number, bandOpts: BandOpts = {}): readonly Band[] => bandsOf(pad, innerW, count, bandOpts),
   });
+}
+
+/**
+ * `count` evenly-spaced vertical bands across an inner pixel span — the
+ * discrete counterpart to `xTicks`/`yTicks`. Used for side-by-side coordinate
+ * columns (a rack of frames) rather than a continuous axis.
+ */
+function bandsOf(pad: number, innerW: number, count: number, opts: BandOpts): readonly Band[] {
+  const n = Math.max(1, Math.floor(count));
+  const inner = Math.min(0.9, Math.max(0, opts.padding ?? 0.2));
+  const slot = innerW / n;
+  const width = slot * (1 - inner);
+  const gap = slot * inner;
+  const out: Band[] = [];
+  for (let i = 0; i < n; i += 1) {
+    const lo = pad + i * slot + gap / 2;
+    const hi = lo + width;
+    out.push({ center: (lo + hi) / 2, lo, hi, width });
+  }
+  return out;
+}
+
+/**
+ * Paul Heckbert's "nice numbers for graph labels": round `range` to
+ * 1/2/5 × 10ⁿ, either up (`round`, for a step size) or to the nearest
+ * containing nice value (for a span).
+ */
+function niceNum(range: number, round: boolean): number {
+  if (range === 0) return 0;
+  const exponent = Math.floor(Math.log10(range));
+  const fraction = range / 10 ** exponent;
+  let niceFraction: number;
+  if (round) {
+    if (fraction < 1.5) niceFraction = 1;
+    else if (fraction < 3) niceFraction = 2;
+    else if (fraction < 7) niceFraction = 5;
+    else niceFraction = 10;
+  } else {
+    if (fraction <= 1) niceFraction = 1;
+    else if (fraction <= 2) niceFraction = 2;
+    else if (fraction <= 5) niceFraction = 5;
+    else niceFraction = 10;
+  }
+  return niceFraction * 10 ** exponent;
+}
+
+/**
+ * Nice-number tick values spanning [lo, hi]: a step from the standard
+ * 1/2/5 × 10ⁿ family, lo/hi snapped outward to that step, then filtered back
+ * to the requested span so an honest axis never ticks past its own domain.
+ */
+export function niceTicks(lo: number, hi: number, target = 5): number[] {
+  if (lo > hi) [lo, hi] = [hi, lo];
+  if (lo === hi) return [lo];
+  const span = hi - lo;
+  const step = niceNum(span / Math.max(1, target - 1), true);
+  const niceLo = Math.floor(lo / step) * step;
+  const niceHi = Math.ceil(hi / step) * step;
+  const eps = step * 1e-9;
+  const ticks: number[] = [];
+  const n = Math.round((niceHi - niceLo) / step);
+  for (let i = 0; i <= n; i += 1) {
+    const v = Math.round((niceLo + i * step) / step) * step;
+    if (v >= lo - eps && v <= hi + eps) ticks.push(snapZero(v));
+  }
+  return ticks;
+}
+
+/** -0 reads as an ugly "-0" label; treat it as 0. */
+function snapZero(v: number): number {
+  return Object.is(v, -0) ? 0 : v;
+}
+
+/**
+ * An honest number label: trims trailing zeros and float noise
+ * (`0.30000000000000004` → `"0.3"`) without hiding real precision.
+ */
+export function formatNumber(v: number): string {
+  if (!Number.isFinite(v)) return String(v);
+  const rounded = Number.parseFloat(v.toPrecision(10));
+  return String(snapZero(rounded));
 }
 
 /** A padded range around sampled values, always including y = 0. */
@@ -94,12 +196,21 @@ export function rangeOf(values: readonly number[]): readonly [number, number] {
   return [lo - margin, hi + margin];
 }
 
-/** An SVG root sized to a frame; every continuous view mounts one of these. */
+/**
+ * An SVG root sized to a frame; every continuous view mounts one of these.
+ *
+ * The `viewBox` carries the frame's logical (mapping) dimensions — untouched,
+ * so `x`/`y`/`toDomain` stay exactly as authored. `width`/`height` attributes
+ * are kept only as an intrinsic fallback (e.g. paste into a document with no
+ * stylesheet); CSS (`.mr-plotsvg`, theme.ts) is what actually sizes it,
+ * letting the figure grow to fill the space its panel is given.
+ */
 export function svgLayer(doc: Document, frame: CoordFrame, cls: string): SVGSVGElement {
   const svg = doc.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${frame.width} ${frame.height}`);
   svg.setAttribute('width', String(frame.width));
   svg.setAttribute('height', String(frame.height));
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   svg.classList.add('mr-svg', 'mr-plotsvg', cls);
   return svg;
 }
@@ -108,6 +219,63 @@ export function svgLayer(doc: Document, frame: CoordFrame, cls: string): SVGSVGE
 export function polyline(points: ReadonlyArray<readonly [number, number]>): string {
   if (points.length === 0) return '';
   return points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
+}
+
+export interface TickAxes {
+  /** Pixel x of the vertical axis line — where y-tick marks and labels sit. */
+  readonly atX: number;
+  /** Pixel y of the horizontal axis line — where x-tick marks and labels sit. */
+  readonly atY: number;
+}
+
+const TICK_LEN = 4;
+
+/**
+ * Real tick marks + honest number labels for a frame, appended onto `svg`.
+ * Callers pass the pixel position of each axis line because that convention
+ * differs by provider — a plot draws its value axis at the domain's left
+ * edge, a plane draws both axes through zero — while the tick *values*
+ * always come from the frame (`xTicks`/`yTicks`), so the numbers stay
+ * correct even when the axis line itself is drawn elsewhere.
+ */
+export function drawTicks(doc: Document, svg: SVGSVGElement, frame: CoordFrame, axes: TickAxes): void {
+  const g = doc.createElementNS(SVG_NS, 'g');
+  g.classList.add('mr-ticks');
+  for (const v of frame.xTicks()) {
+    const px = frame.x(v);
+    const tick = doc.createElementNS(SVG_NS, 'line');
+    tick.setAttribute('x1', px.toFixed(2));
+    tick.setAttribute('x2', px.toFixed(2));
+    tick.setAttribute('y1', (axes.atY - TICK_LEN).toFixed(2));
+    tick.setAttribute('y2', (axes.atY + TICK_LEN).toFixed(2));
+    tick.classList.add('mr-tick');
+    g.appendChild(tick);
+    const label = doc.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', px.toFixed(2));
+    label.setAttribute('y', (axes.atY + TICK_LEN + 11).toFixed(2));
+    label.setAttribute('text-anchor', 'middle');
+    label.classList.add('mr-tick-label');
+    label.textContent = formatNumber(v);
+    g.appendChild(label);
+  }
+  for (const v of frame.yTicks()) {
+    const py = frame.y(v);
+    const tick = doc.createElementNS(SVG_NS, 'line');
+    tick.setAttribute('x1', (axes.atX - TICK_LEN).toFixed(2));
+    tick.setAttribute('x2', (axes.atX + TICK_LEN).toFixed(2));
+    tick.setAttribute('y1', py.toFixed(2));
+    tick.setAttribute('y2', py.toFixed(2));
+    tick.classList.add('mr-tick');
+    g.appendChild(tick);
+    const label = doc.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', (axes.atX - TICK_LEN - 3).toFixed(2));
+    label.setAttribute('y', (py + 3).toFixed(2));
+    label.setAttribute('text-anchor', 'end');
+    label.classList.add('mr-tick-label');
+    label.textContent = formatNumber(v);
+    g.appendChild(label);
+  }
+  svg.appendChild(g);
 }
 
 /**

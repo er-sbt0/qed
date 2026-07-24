@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROBE · the coordinate rack on a signals+frame stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c101d; --panel:#141a2c; --rule:#26304d; --grid:#1a2137;
+    --free:#f0b24a; --pin:#8ea2ff; --esc:#5fe3b0; --box:#ff5f7e;
+    --text:#dde2f0; --dim:#7f89a8; --faint:#4d5675;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text)}
+  body{font-family:Spectral,Georgia,serif;font-weight:300;padding:34px 22px 70px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+  h1{font-size:clamp(24px,4.2vw,38px);font-weight:300;letter-spacing:-.015em;margin:0 0 12px}
+  h1 em{font-style:italic;color:var(--free);font-weight:400}
+  .lede{max-width:66ch;color:#b9c1d6;font-size:16.5px;margin:0 0 24px}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 6px 0;overflow:hidden}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  svg text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .rack{display:flex;flex-wrap:wrap;gap:20px 28px;align-items:flex-end;border:1px solid var(--rule);border-top:none;background:#111627;padding:16px 18px 18px}
+  .grp{display:flex;flex-direction:column;gap:8px}
+  .grp>span{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .seg{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+  button{font-family:'IBM Plex Mono',monospace;font-size:12px;background:transparent;color:var(--dim);border:0;padding:8px 13px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button+button{border-left:1px solid var(--rule)}
+  button:hover{color:var(--text);background:#1b2238}
+  button[aria-pressed="true"]{background:var(--free);color:#171204}
+  #modeseg button[data-m="box"][aria-pressed="true"]{background:var(--box);color:#2a0a10}
+  .act{border:1px solid var(--rule);border-radius:2px}
+  .act.hot{border-color:var(--free);color:var(--free)}
+  figcaption{margin-top:16px;color:var(--dim);font-size:14px;max-width:72ch}
+  .note{margin-top:30px;border-top:1px solid var(--rule);padding-top:16px;font-size:13.5px;color:#9aa3bd;max-width:74ch}
+  .note b{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--esc);display:block;margin-bottom:4px}
+  code{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--free)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">architecture probe · signals + named frame + reactive claim</p>
+  <h1>An open set can only ever pin down <em>finitely many</em> coordinates.</h1>
+  <p class="lede">Same figure as the baseline Tychonoff scene I — but the author code here writes marks in a
+    named <code>recede</code> frame (never pixels), the clamped count and the membership verdict are
+    <em>derived signals</em>, and there is exactly one <code>effect</code> that repaints. No handler calls
+    a render function. Drag the scrubber to sail out to coordinate 10,000 and watch it re-derive live.</p>
+
+  <figure>
+    <div class="board">
+      <svg id="stage" viewBox="0 0 960 580" role="img" aria-label="A receding row of two-state coordinate slots, most free, a few clamped.">
+        <g id="art"></g>
+      </svg>
+    </div>
+    <div class="rack">
+      <div class="grp"><span>topology</span>
+        <div class="seg" id="modeseg">
+          <button data-m="product" aria-pressed="true">product</button>
+          <button data-m="box" aria-pressed="false">box</button>
+        </div>
+      </div>
+      <div class="grp"><span>the mask</span><button class="act" id="clear">Release everything</button></div>
+      <div class="grp"><span>&nbsp;</span><button class="act" id="rand">Clamp five at random</button></div>
+    </div>
+    <figcaption>Click a cell to move the point; click the strip below a column to cycle it
+      free → clamp 0 → clamp 1 → free. Drag the rail at the bottom to slide the window of coordinates —
+      coordinate 10,000 looks exactly like coordinate 3. Throw the box switch and the count goes to infinity.</figcaption>
+  </figure>
+
+  <p class="note"><b>what this probe is testing</b>
+    The whole stage is ~40 lines of reactive core + a frame object + a mark kernel. The pedagogy
+    (<code>clampedCount</code>, <code>membership</code>) is expressed as <code>derived(...)</code> and a
+    <code>claim(...)</code> — qed's semantics, ported — so a state change re-judges and repaints with zero
+    wiring in the interaction handlers. The frame owns all geometry: the author says
+    <code>frame.colX(k)</code>, and the recede/fit math lives in one place, reusable by any figure.</p>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============================================================ *
+ * 1. reactive core — signals, derived, effect  (the qed port)  *
+ * ============================================================ */
+let ACTIVE = null;
+function signal(initial){
+  let v = initial; const subs = new Set();
+  return {
+    get value(){ if(ACTIVE){ subs.add(ACTIVE.run); ACTIVE.deps.add(subs); } return v; },
+    set value(n){ if(n===v) return; v=n; [...subs].forEach(run=>run()); },
+    peek(){ return v; }
+  };
+}
+function effect(fn){
+  const e = { deps:new Set() };
+  e.run = () => {
+    e.deps.forEach(s=>s.delete(e.run)); e.deps.clear();
+    const prev = ACTIVE; ACTIVE = e;
+    try { fn(); } finally { ACTIVE = prev; }
+  };
+  e.run();
+  return e;
+}
+function derived(fn){ const s = signal(); effect(()=>{ s.value = fn(); }); return s; }
+// qed's M.claim, in miniature: a live proposition with a colorable verdict.
+function claim(predicate){ return derived(predicate); }
+
+/* ============================================================ *
+ * 2. named frame — geometry the author never spells in pixels  *
+ * ============================================================ */
+function recedeFrame({ x0, width, n, ratio }){
+  const ws=[], xs=[]; let s=0;
+  for(let k=0;k<n;k++){ ws.push(Math.pow(ratio,k)); s+=ws[k]; }
+  let x=x0; for(let k=0;k<n;k++){ ws[k]=ws[k]/s*width; xs.push(x); x+=ws[k]; }
+  return {
+    n, x0, width,
+    colX:k=>xs[k], colW:k=>ws[k], colMid:k=>xs[k]+ws[k]/2,
+    end:xs[n-1]+ws[n-1],
+    colAt(px){ for(let k=0;k<n;k++) if(px>=xs[k]&&px<xs[k]+ws[k]) return k; return -1; }
+  };
+}
+
+/* ============================================================ *
+ * 3. mark kernel — renderer-agnostic ops, painted to SVG.      *
+ *    (a WebGL backend would consume the SAME ops — probe 2.)    *
+ * ============================================================ */
+const mono = "'IBM Plex Mono',monospace";
+function paint(ops){
+  let o='';
+  for(const m of ops){
+    if(m.k==='rect')  o+=`<rect x="${m.x}" y="${m.y}" width="${m.w}" height="${m.h}" fill="${m.fill}"`+
+        `${m.op!=null?` fill-opacity="${m.op}"`:''}${m.stroke?` stroke="${m.stroke}"`:''}${m.rx?` rx="${m.rx}"`:''}/>`;
+    else if(m.k==='text') o+=`<text x="${m.x}" y="${m.y}" fill="${m.fill}" font-size="${m.s}"`+
+        `${m.a?` text-anchor="${m.a}"`:''}${m.ls?` letter-spacing="${m.ls}"`:''}>${m.t}</text>`;
+    else if(m.k==='line') o+=`<line x1="${m.x1}" y1="${m.y1}" x2="${m.x2}" y2="${m.y2}" stroke="${m.stroke}"`+
+        `${m.w?` stroke-width="${m.w}"`:''}${m.dash?` stroke-dasharray="${m.dash}"`:''}${m.cap?` stroke-linecap="${m.cap}"`:''}/>`;
+    else if(m.k==='circle') o+=`<circle cx="${m.cx}" cy="${m.cy}" r="${m.r}" fill="${m.fill}"`+
+        `${m.stroke?` stroke="${m.stroke}"`:''}${m.sw?` stroke-width="${m.sw}"`:''}/>`;
+  }
+  return o;
+}
+const rect=(x,y,w,h,fill,extra={})=>({k:'rect',x,y,w,h,fill,...extra});
+const text=(x,y,t,fill,s,extra={})=>({k:'text',x,y,t,fill,s,...extra});
+const line=(x1,y1,x2,y2,stroke,extra={})=>({k:'line',x1,y1,x2,y2,stroke,...extra});
+const circle=(cx,cy,r,fill,extra={})=>({k:'circle',cx,cy,r,fill,...extra});
+
+/* ============================================================ *
+ * 4. the scene: state, frame, claims, figure                   *
+ * ============================================================ */
+const VBW=960, VBH=580;
+const Y1=104, CH=76, GAP=8, Y0=Y1+CH+GAP, BOT=Y0+CH;   // value-1 row, value-0 row
+const STRIP=BOT+12, SH=18;
+const TAILX0=882, TAILX1=936;
+const RAILY=524, RAIL0=70, RAIL1=870, RAILMAX=9970;
+
+const F = recedeFrame({ x0:70, width:800, n:30, ratio:0.93 });
+
+// deterministic pseudo-values so far-away coordinates render stably
+const hash = k => { let h=Math.imul(k^0x9e3779b9,2654435761)>>>0; return ((h>>>9)&0xffff)/65536; };
+
+// ---- reactive state cells ----
+const mode = signal('product');   // 'product' | 'box'
+const base = signal(0);           // leftmost visible coordinate index
+const pins = signal(new Map());   // abs coord -> 0|1  (explicit clamps, product mode)
+const pts  = signal(new Map());   // abs coord -> 0|1  (the chosen point)
+
+const ptAt  = i => { const m=pts.value;  return m.has(i)? m.get(i) : (hash(i+777)>0.5?1:0); };
+const pinAt = i => {
+  if(mode.value==='box') { const m=pins.value; return m.has(i)? m.get(i) : (hash(i+31)>0.5?1:0); }
+  const m=pins.value; return m.has(i)? m.get(i) : null;   // product: only explicit clamps
+};
+
+// ---- derived quantities: the actual theorem, as live signals ----
+const clampedCount = derived(() => mode.value==='box' ? Infinity : pins.value.size);
+// membership as a claim(): does the point lie in the basic open set?
+const membership = claim(() => {
+  const b = base.value; let firstFail = -1;
+  const clamps = mode.value==='box'
+      ? Array.from({length:F.n}, (_,k)=>b+k)                  // box clamps every coord
+      : [...pins.value.keys()];
+  for(const i of clamps){ const pin=pinAt(i); if(pin!==null && pin!==ptAt(i)){ if(firstFail<0||i<firstFail) firstFail=i; } }
+  return { holds: firstFail<0, firstFail };
+});
+
+// ---- the figure: marks in frame coordinates ----
+function figure(){
+  const ops=[]; const boxy = mode.value==='box';
+  const AC = boxy ? 'var(--box)' : 'var(--pin)';
+  const b = base.value;
+
+  // backdrop + header rails (a small frame-craft flourish)
+  ops.push(rect(44,64,872,272,'#10162a',{stroke:'#20283f'}));
+  ops.push(text(44,54,'THE COORDINATE RACK — {0,1} IN EVERY SLOT','#4d5675',10,{ls:2.2}));
+  ops.push(text(916,54,'A POINT IS ONE CHOICE PER SLOT','#4d5675',10,{a:'end',ls:1.4}));
+  ops.push(text(F.x0-12,Y1+CH/2+4,'1','#67709a',12,{a:'end'}));
+  ops.push(text(F.x0-12,Y0+CH/2+4,'0','#67709a',12,{a:'end'}));
+
+  for(let k=0;k<F.n;k++){
+    const i=b+k, x=F.colX(k), w=F.colW(k), inner=Math.max(1.5,w-2.2), pv=ptAt(i), pin=pinAt(i);
+    [[1,Y1],[0,Y0]].forEach(([val,y])=>{
+      let fill,op,stroke=null;
+      if(pin===null){ fill='var(--free)'; op=.72; }           // free: loudest — freedom is the content
+      else if(pin===val){ fill=AC; op=.62; }                  // the clamped value
+      else { fill='#0a0e18'; op=1; stroke='#1d2439'; }        // excluded
+      ops.push(rect(x+1.1,y,inner,CH,fill,{op,stroke}));
+      if(pin!==null && pin!==val && w>9)
+        ops.push(line(x+3,y+CH/2-4,x+w-3,y+CH/2+4,'#2b3450'));
+    });
+    // the point marker
+    const py=(pv===1?Y1:Y0)+CH/2, bad = pin!==null && pin!==pv;
+    ops.push(circle(x+w/2,py,Math.min(5.5,Math.max(1.8,w/5)),bad?'var(--box)':'#0c101d',{stroke:'#0c101d',sw:1}));
+    ops.push(circle(x+w/2,py,Math.min(3.4,Math.max(1,w/8)),bad?'#0c101d':'var(--esc)'));
+    // the clamp strip
+    ops.push(rect(x+1.1,STRIP,inner,SH,pin===null?'#161d31':AC,{op:pin===null?1:.85,stroke:'#1d2439'}));
+    if(pin!==null && w>11) ops.push(text(x+w/2,STRIP+13,String(pin),'#0c101d',10.5,{a:'middle'}));
+    if(w>16) ops.push(text(x+w/2,STRIP+SH+15,String(i),'#4d5675',9.5,{a:'middle'}));
+  }
+
+  // terminal glyph — a control, not an ellipsis
+  ops.push(rect(TAILX0,Y1,TAILX1-TAILX0,BOT-Y1,'#131a2e',{stroke:'#232c46',dash:'3 3'}));
+  ops.push(text((TAILX0+TAILX1)/2,(Y1+BOT)/2-2,'⋯',boxy?'var(--box)':'var(--free)',20,{a:'middle'}));
+  ops.push(text((TAILX0+TAILX1)/2,(Y1+BOT)/2+18,'forever','#67709a',9,{a:'middle'}));
+
+  // ---- readout: the derived signals, drawn ----
+  const RY=380;
+  ops.push(text(44,RY,'CLAMPED COORDINATES','#8792b3',11.5,{ls:2}));
+  ops.push(text(44,RY+50,clampedCount.value===Infinity?'∞':String(clampedCount.value),
+      boxy?'var(--box)':'var(--pin)',46));
+  ops.push(text(150,RY+50,boxy?'every single one':'always finite, however you click','#67709a',12));
+
+  const cx=440;
+  ops.push(text(cx,RY,'POINTS IN THIS OPEN SET','#8792b3',11.5,{ls:2}));
+  ops.push(text(cx,RY+28,boxy?'exactly one — the mask names the point'
+      :(pins.value.size?'uncountably many — a whole continuum':'everything — the whole space'),
+      boxy?'var(--box)':'var(--free)',15));
+  const m=membership.value;
+  ops.push(text(cx,RY+50, m.holds?'membership: the point lies inside the mask'
+      :`membership: outside — it fails at coordinate ${m.firstFail}`,
+      m.holds?'var(--esc)':'var(--box)',12.5));
+  if(boxy)
+    ops.push(text(cx,RY+72,'discrete + uncountable ⇒ the singleton cover has no finite subcover','var(--box)',12));
+
+  // ---- the scrubber rail: continuous drag → live re-derivation ----
+  ops.push(text(44,RAILY-16,'WINDOW ONTO THE INFINITE ROW','#8792b3',10.5,{ls:2}));
+  ops.push(line(RAIL0,RAILY,RAIL1,RAILY,'#2a3352',{w:4,cap:'round'}));
+  const hx = RAIL0 + (b/RAILMAX)*(RAIL1-RAIL0);
+  ops.push(line(RAIL0,RAILY,hx,RAILY,boxy?'var(--box)':'var(--free)',{w:4,cap:'round'}));
+  ops.push(circle(hx,RAILY,7,boxy?'var(--box)':'var(--free)',{stroke:'#0c101d',sw:2}));
+  ops.push(text(RAIL0,RAILY+24,'0','#4d5675',10));
+  ops.push(text(RAIL1,RAILY+24,'10,000','#4d5675',10,{a:'end'}));
+  ops.push(text((RAIL0+RAIL1)/2,RAILY+24,`coordinates ${b}–${b+F.n-1}`,'#9aa3bd',10.5,{a:'middle'}));
+
+  return ops;
+}
+
+/* ============================================================ *
+ * 5. the ONE effect — the only place a repaint happens          *
+ * ============================================================ */
+const art = document.getElementById('art');
+effect(() => { art.innerHTML = paint(figure()); });
+
+/* ============================================================ *
+ * 6. interaction — handlers only SET signals. never repaint.    *
+ * ============================================================ */
+const svg = document.getElementById('stage');
+const toVB = e => { const r=svg.getBoundingClientRect();
+  return [ (e.clientX-r.left)*(VBW/r.width), (e.clientY-r.top)*(VBH/r.height) ]; };
+function editMap(sig, fn){ const m=new Map(sig.peek()); fn(m); sig.value=m; }
+
+let draggingRail=false;
+svg.addEventListener('pointerdown', e=>{
+  const [px,py]=toVB(e);
+  if(py>=RAILY-14 && py<=RAILY+14 && px>=RAIL0-8 && px<=RAIL1+8){ draggingRail=true; setBase(px); return; }
+  if(px>=TAILX0 && py>=Y1 && py<=BOT){ base.value = base.peek()===0 ? 9986 : 0; return; }
+  const k=F.colAt(px); if(k<0) return; const i=base.peek()+k;
+  if(py>=STRIP && py<=STRIP+SH){
+    if(mode.peek()==='box') return;
+    editMap(pins, m=>{ const c=m.has(i)?m.get(i):null;
+      if(c===null) m.set(i,0); else if(c===0) m.set(i,1); else m.delete(i); });
+  } else if(py>=Y1 && py<=BOT){
+    editMap(pts, m=> m.set(i, py<(Y1+CH+GAP/2)?1:0));
+  }
+});
+function setBase(px){ const t=Math.max(0,Math.min(1,(px-RAIL0)/(RAIL1-RAIL0))); base.value=Math.round(t*RAILMAX); }
+window.addEventListener('pointermove', e=>{ if(draggingRail) setBase(toVB(e)[0]); });
+window.addEventListener('pointerup', ()=> draggingRail=false);
+
+document.getElementById('clear').addEventListener('click', ()=> pins.value=new Map());
+document.getElementById('rand').addEventListener('click', ()=>{
+  const m=new Map(), b=base.peek(); const picks=new Set();
+  while(picks.size<5) picks.add(Math.floor(Math.random()*12));
+  picks.forEach(k=> m.set(b+k, Math.random()>0.5?1:0));
+  pins.value=m;
+});
+document.getElementById('modeseg').addEventListener('click', e=>{
+  const btn=e.target.closest('button'); if(!btn) return;
+  mode.value=btn.dataset.m;
+  [...e.currentTarget.children].forEach(c=>c.setAttribute('aria-pressed', c===btn));
+});
+
+// seed a small mask
+editMap(pins, m=>{ m.set(2,1); m.set(5,0); m.set(9,1); });
+})();
+</script>
+</body>
+</html>
