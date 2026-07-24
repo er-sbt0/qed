@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The survivors — assembling the point that gets away</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c101d; --panel:#141a2c; --rule:#26304d; --grid:#1a2137;
+    --free:#f0b24a; --pin:#8ea2ff; --esc:#5fe3b0; --box:#ff5f7e;
+    --text:#dde2f0; --dim:#7f89a8; --faint:#4d5675;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text)}
+  body{font-family:Spectral,Georgia,serif;font-weight:300;padding:34px 22px 70px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+  h1{font-size:clamp(26px,4.4vw,40px);font-weight:300;letter-spacing:-.015em;margin:0 0 12px}
+  h1 em{font-style:italic;color:var(--esc);font-weight:400}
+  .lede{max-width:64ch;color:#b9c1d6;font-size:17px;margin:0 0 26px}
+  i.v{font-style:italic;color:var(--text)}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 6px 0;overflow:hidden}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  svg text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .rack{display:flex;flex-wrap:wrap;gap:22px 30px;align-items:flex-end;border:1px solid var(--rule);border-top:none;background:#111627;padding:16px 18px 18px}
+  .grp{display:flex;flex-direction:column;gap:8px}
+  .grp>span{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  button{font-family:'IBM Plex Mono',monospace;font-size:12px;background:transparent;color:var(--dim);border:1px solid var(--rule);border-radius:2px;padding:8px 13px;cursor:pointer;transition:background .15s,color .15s}
+  button:hover{color:var(--text);background:#1b2238}
+  button.hot{border-color:var(--esc);color:var(--esc)}
+  button.warn{border-color:var(--box);color:var(--box)}
+  button:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+  figcaption{margin-top:16px;color:var(--dim);font-size:14.5px;max-width:70ch}
+  .blocks{margin-top:34px;border-top:1px solid var(--rule);padding-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 26px}
+  .blocks div{font-size:14.5px;color:#a8b1c8}
+  .blocks b{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--esc);margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Tychonoff · scene III — Alexander's subbase lemma</p>
+  <h1>If nothing can pin you down in <em>any single coordinate</em>, nothing can pin you down at all.</h1>
+  <p class="lede">Suppose a cover made only of subbasic sets — each one constrains exactly one coordinate — has no finite subcover. Then no single factor is fully covered by the slices used there, because [0,1] is compact and finitely many slices would have sufficed. So each coordinate leaves a survivor. Collect one from each, and the assembled point sits outside every set in the cover. The family was never a cover at all.</p>
+
+  <figure>
+    <div class="board">
+      <svg id="stage" viewBox="0 0 940 716" role="img" aria-label="Six coordinate axes with covered slices and gaps, survivors assembling into a single escaping point.">
+        <g id="art"></g>
+      </svg>
+    </div>
+    <div class="rack">
+      <div class="grp"><span>the proof</span><button class="hot" id="assemble">Assemble the survivors →</button></div>
+      <div class="grp"><span>the choice</span><button id="reroll">Reroll — pick different ones</button></div>
+      <div class="grp"><span>the contrapositive</span><button class="warn" id="close">Cover coordinate 3 completely</button></div>
+      <div class="grp"><span>&nbsp;</span><button id="reset">Reset</button></div>
+    </div>
+    <figcaption>Every ✗ on the right is checked, not asserted: for each set in the cover the figure names the one coordinate where the assembled point falls outside its slice. Reroll and the witnesses change while the verdict does not — which is exactly what it looks like when a proof uses the Axiom of Choice.</figcaption>
+  </figure>
+
+  <div class="blocks">
+    <div><b>one tooth each</b>A subbasic set constrains a single coordinate. That is the whole reason this argument can be run coordinate by coordinate.</div>
+    <div><b>the gap is the point</b>Compactness of the factor is used in the negative: a gap survives precisely because the slices failed to cover [0,1].</div>
+    <div><b>the assembly</b>Survivors slide into one column and become a single point of the product. Nothing is approximated — the point is exhibited.</div>
+    <div><b>choice, shown not hidden</b>The marker hovers among equally good candidates before settling. Tychonoff is equivalent to AC; a figure that quietly picked midpoints would be lying about the theorem.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const W=940, H=716, NC=6;
+const AXL=178, AXR=676, ROWTOP=104, ROWH=54;
+const RACKX=764;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const st = {gap:[], slices:[], surv:[], closed:new Set(), spread:0, ghosts:[], tested:false};
+
+/* Build a subbasic cover: for each coordinate, two open slices leaving one gap. */
+function build(){
+  const centres=[0.62,0.31,0.74,0.45,0.24,0.57], halfw=[0.075,0.06,0.055,0.07,0.05,0.065];
+  st.slices=[]; st.gap=[]; st.closed.clear();
+  for(let i=0;i<NC;i++){
+    const c=centres[i], h=halfw[i];
+    st.gap.push([c-h, c+h]);
+    st.slices.push([[-0.04, c-h],[c+h, 1.04]]);
+  }
+  pick(); st.spread=0; st.tested=false;
+}
+function pick(){
+  st.surv = st.gap.map(([a,b],i)=> st.closed.has(i) ? null : a + (b-a)*(0.18+0.64*Math.random()));
+}
+/* the subbasic cover, flattened: each entry constrains exactly one coordinate */
+function coverList(){
+  const out=[];
+  st.slices.forEach((ss,i)=> ss.forEach(([a,b],j)=> out.push({i,a,b,j})));
+  return out;
+}
+
+const AX = v => AXL + v*(AXR-AXL);
+const rowY = i => ROWTOP + i*ROWH;
+
+function render(){
+  const g=[], cov=coverList();
+  const anyClosed = st.closed.size>0;
+
+  g.push(`<rect x="40" y="${ROWTOP-56}" width="${W-80}" height="${NC*ROWH+64}" fill="#10162a" stroke="#20283f"/>`);
+  g.push(`<text x="40" y="${ROWTOP-66}" fill="#4d5675" font-size="10" letter-spacing="2.2">THE FACTORS — EACH A COPY OF [0,1], EACH COMPACT</text>`);
+  g.push(`<text x="${W-40}" y="${ROWTOP-66}" fill="#4d5675" font-size="10" letter-spacing="1.6" text-anchor="end">THE ASSEMBLED POINT</text>`);
+
+  /* ---- one row per coordinate ---- */
+  for(let i=0;i<NC;i++){
+    const y=rowY(i), closed=st.closed.has(i);
+    g.push(`<text x="${AXL-22}" y="${y+4}" fill="#8792b3" font-size="12" text-anchor="end">X${'₀₁₂₃₄₅'[i]}</text>`);
+    g.push(`<line x1="${AX(0)}" y1="${y}" x2="${AX(1)}" y2="${y}" stroke="#2a3352" stroke-width="7" stroke-linecap="round"/>`);
+    // the slices the cover uses in this coordinate
+    for(const s of st.slices[i]){
+      const a=Math.max(0,s[0]), b=Math.min(1,s[1]);
+      g.push(`<line x1="${AX(a)}" y1="${y}" x2="${AX(b)}" y2="${y}" stroke="var(--pin)" stroke-width="7" stroke-opacity=".72" stroke-linecap="butt"/>`);
+    }
+    if(closed){
+      const [a,b]=st.gap[i];
+      g.push(`<line x1="${AX(a)}" y1="${y}" x2="${AX(b)}" y2="${y}" stroke="var(--box)" stroke-width="7" stroke-linecap="butt"/>`);
+      g.push(`<text x="${AX(1)+16}" y="${y+4}" fill="var(--box)" font-size="11">covered — no survivor</text>`);
+    } else {
+      const [a,b]=st.gap[i];
+      g.push(`<rect x="${AX(a)}" y="${y-9}" width="${AX(b)-AX(a)}" height="18" fill="var(--esc)" fill-opacity=".10" stroke="var(--esc)" stroke-opacity=".45" stroke-dasharray="3 3"/>`);
+      // the survivor, mid-flight between its axis and the rack
+      const e = ease(clamp(st.spread*(1.5) - 0.5*i/(NC-1)));
+      const sx = AX(st.surv[i]), tx = RACKX+34;
+      const ty = ROWTOP + i*ROWH;
+      const cx = sx + (tx-sx)*e, cy = y + (ty-y)*e;
+      if(e>0 && e<1)
+        g.push(`<line x1="${sx}" y1="${y}" x2="${cx}" y2="${cy}" stroke="var(--esc)" stroke-opacity=".22" stroke-dasharray="2 4"/>`);
+      if(e===0) for(const gh of st.ghosts)
+        if(gh.i===i) g.push(`<circle cx="${AX(gh.v)}" cy="${y}" r="3.2" fill="var(--esc)" fill-opacity="${gh.o}"/>`);
+      g.push(`<circle cx="${cx}" cy="${cy}" r="6.5" fill="var(--esc)" stroke="#0c101d" stroke-width="1.5"/>`);
+      if(e<0.15)
+        g.push(`<text x="${sx}" y="${y+26}" fill="var(--esc)" font-size="10" text-anchor="middle">${st.surv[i].toFixed(3)}</text>`);
+    }
+  }
+  g.push(`<text x="${AX(0)}" y="${rowY(NC-1)+34}" fill="#4d5675" font-size="10">0</text>`);
+  g.push(`<text x="${AX(1)}" y="${rowY(NC-1)+34}" fill="#4d5675" font-size="10" text-anchor="end">1</text>`);
+  g.push(`<text x="${(AX(0)+AX(1))/2}" y="${rowY(NC-1)+34}" fill="#4d5675" font-size="10" text-anchor="middle">the slices this cover uses in each factor</text>`);
+
+  /* ---- the rack: the assembled point ---- */
+  g.push(`<rect x="${RACKX}" y="${ROWTOP-24}" width="68" height="${NC*ROWH+8}" fill="#131a2e" stroke="#232c46"/>`);
+  if(st.spread>0.98 && !anyClosed)
+    g.push(`<text x="${RACKX+34}" y="${ROWTOP+NC*ROWH-4}" fill="var(--esc)" font-size="10.5" text-anchor="middle">one point</text>`);
+
+  /* ---- the cover, and the escape test ---- */
+  const CY = ROWTOP+NC*ROWH+52;
+  g.push(`<text x="40" y="${CY}" fill="#8792b3" font-size="11.5" letter-spacing="2">THE COVER — EVERY MEMBER CONSTRAINS ONE COORDINATE</text>`);
+  cov.forEach((c,k)=>{
+    const col = 40 + (k%4)*228, row = CY + 24 + Math.floor(k/4)*26;
+    const closed = st.closed.has(c.i);
+    const inside = !closed && st.surv[c.i]>c.a && st.surv[c.i]<c.b;
+    const shown = st.spread>0.98;
+    const mark = !shown ? '·' : (closed ? '?' : (inside ? '✓' : '✗'));
+    const mc = !shown ? '#3d4666' : (closed ? 'var(--free)' : (inside ? 'var(--box)' : 'var(--esc)'));
+    g.push(`<text x="${col}" y="${row}" fill="${mc}" font-size="13">${mark}</text>`);
+    g.push(`<text x="${col+16}" y="${row}" fill="#8792b3" font-size="11.5">π${'₀₁₂₃₄₅'[c.i]}⁻¹(${c.a.toFixed(2)}, ${c.b.toFixed(2)})</text>`);
+  });
+
+  /* ---- verdict ---- */
+  const VY = CY + 24 + Math.ceil(cov.length/4)*26 + 26;
+  g.push(`<line x1="40" y1="${VY-16}" x2="${W-40}" y2="${VY-16}" stroke="#242c47"/>`);
+  if(anyClosed){
+    const i=[...st.closed][0];
+    g.push(`<text x="40" y="${VY+6}" fill="var(--box)" font-size="15">coordinate ${i} is now completely covered — so the argument stops here</text>`);
+    g.push(`<text x="40" y="${VY+28}" fill="#8792b3" font-size="12">[0,1] is compact, so finitely many of those slices already suffice.</text>`);
+    g.push(`<text x="40" y="${VY+48}" fill="var(--pin)" font-size="12">Their preimages form a finite subcover of the whole product — the hypothesis has failed.</text>`);
+  } else if(st.spread>0.98){
+    g.push(`<text x="40" y="${VY+6}" fill="var(--esc)" font-size="15">every member fails — the assembled point lies in none of them</text>`);
+    g.push(`<text x="40" y="${VY+28}" fill="#8792b3" font-size="12">So the family does not cover the product, contradicting the assumption that it did.</text>`);
+    g.push(`<text x="40" y="${VY+48}" fill="#67709a" font-size="12">Nothing selected these six. Reroll: new witnesses, same verdict — that is Choice at work.</text>`);
+  } else {
+    g.push(`<text x="40" y="${VY+6}" fill="#8792b3" font-size="15">each factor leaves a gap, so each factor leaves a survivor</text>`);
+    g.push(`<text x="40" y="${VY+28}" fill="#67709a" font-size="12">Assemble them and check every member of the cover against the result.</text>`);
+  }
+
+  document.getElementById('art').innerHTML=g.join('');
+}
+const clamp=t=>Math.min(1,Math.max(0,t));
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+/* ---------------- controls ---------------- */
+function animate(to,dur){
+  const from=st.spread, t0=performance.now();
+  if(REDUCED){ st.spread=to; render(); return; }
+  (function step(now){
+    const t=Math.min(1,(now-t0)/dur);
+    st.spread=from+(to-from)*t; render();
+    if(t<1) requestAnimationFrame(step);
+  })(t0);
+}
+document.getElementById('assemble').addEventListener('click', ()=>{
+  const btn=document.getElementById('assemble');
+  if(st.spread>0.5){ btn.textContent='Assemble the survivors →'; animate(0,700); }
+  else { btn.textContent='← Send them back'; animate(1,1400); }
+});
+document.getElementById('reroll').addEventListener('click', ()=>{
+  st.spread=0; document.getElementById('assemble').textContent='Assemble the survivors →';
+  if(REDUCED){ pick(); render(); return; }
+  // let the marker hover among equally good candidates before settling
+  let n=0; st.ghosts=[];
+  const iv=setInterval(()=>{
+    st.ghosts.forEach(gh=>gh.o*=0.72);
+    st.surv.forEach((v,i)=>{ if(v!==null) st.ghosts.push({i, v, o:0.5}); });
+    st.ghosts = st.ghosts.filter(gh=>gh.o>0.05).slice(-60);
+    pick(); render();
+    if(++n>=9){ clearInterval(iv);
+      setTimeout(()=>{ st.ghosts=[]; render(); }, 900); }
+  }, 70);
+});
+document.getElementById('close').addEventListener('click', ()=>{
+  const btn=document.getElementById('close');
+  if(st.closed.has(3)){ st.closed.delete(3); btn.textContent='Cover coordinate 3 completely'; pick(); }
+  else { st.closed.add(3); btn.textContent='Reopen coordinate 3'; st.surv[3]=null; }
+  st.spread=0; document.getElementById('assemble').textContent='Assemble the survivors →';
+  render();
+});
+document.getElementById('reset').addEventListener('click', ()=>{
+  st.ghosts=[]; build(); document.getElementById('assemble').textContent='Assemble the survivors →';
+  document.getElementById('close').textContent='Cover coordinate 3 completely'; render();
+});
+
+build(); render();
+})();
+</script>
+</body>
+</html>

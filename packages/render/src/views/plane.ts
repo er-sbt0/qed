@@ -10,7 +10,7 @@
 
 import type { Handle } from '@math-ai/core';
 import type { Stage } from '../stage.js';
-import { FramedView, SVG_NS, createFrame, polyline, svgLayer } from './frame.js';
+import { FramedView, SVG_NS, createFrame, drawTicks, polyline, svgLayer } from './frame.js';
 import type { CoordFrame } from './frame.js';
 
 export interface PlaneSpec {
@@ -62,6 +62,7 @@ export class PlaneView extends FramedView {
     );
     axes.classList.add('mr-axis');
     svg.appendChild(axes);
+    drawTicks(doc, svg, f, { atX: f.x(0), atY: f.y(0) });
 
     this.paintGrid(doc);
     return root;

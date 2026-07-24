@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prune or escape — compactness of {0,1}ᴺ, executed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c101d; --panel:#141a2c; --rule:#26304d; --grid:#1a2137;
+    --free:#f0b24a; --pin:#8ea2ff; --esc:#5fe3b0; --box:#ff5f7e;
+    --text:#dde2f0; --dim:#7f89a8; --faint:#4d5675;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text)}
+  body{font-family:Spectral,Georgia,serif;font-weight:300;padding:34px 22px 70px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+  h1{font-size:clamp(26px,4.4vw,40px);font-weight:300;letter-spacing:-.015em;margin:0 0 12px}
+  h1 em{font-style:italic;color:var(--esc);font-weight:400}
+  .lede{max-width:64ch;color:#b9c1d6;font-size:17px;margin:0 0 26px}
+  i.v{font-style:italic;color:var(--text)}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 6px 0;overflow:hidden}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  svg text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .rack{display:flex;flex-wrap:wrap;gap:22px 30px;align-items:flex-end;border:1px solid var(--rule);border-top:none;background:#111627;padding:16px 18px 18px}
+  .grp{display:flex;flex-direction:column;gap:8px}
+  .grp>span{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .seg{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+  button{font-family:'IBM Plex Mono',monospace;font-size:12px;background:transparent;color:var(--dim);border:0;padding:8px 13px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button+button{border-left:1px solid var(--rule)}
+  button:hover{color:var(--text);background:#1b2238}
+  button[aria-pressed="true"]{background:var(--pin);color:#0b1024}
+  .act{border:1px solid var(--rule);border-radius:2px}
+  .act.hot{border-color:var(--esc);color:var(--esc)}
+  button:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+  input[type=range]{width:170px;accent-color:var(--esc);background:transparent}
+  input[type=range]:focus-visible{outline:2px solid var(--pin);outline-offset:4px}
+  label.chk{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);cursor:pointer}
+  label.chk input{accent-color:var(--box)}
+  figcaption{margin-top:16px;color:var(--dim);font-size:14.5px;max-width:70ch}
+  .blocks{margin-top:34px;border-top:1px solid var(--rule);padding-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 26px}
+  .blocks div{font-size:14.5px;color:#a8b1c8}
+  .blocks b{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--esc);margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Tychonoff · scene II — compactness you can run</p>
+  <h1>Prune the claimed subtrees. You either finish, or you <em>fall forever</em>.</h1>
+  <p class="lede">A point of {0,1}<sup>ℕ</sup> is a path down the tree; a cylinder is a whole subtree. Walk from the root: if some cylinder already owns everything below you, cut and step back. Otherwise go deeper. Every run ends one of two ways — a finite list of cylinders that did the job, or a branch nobody claimed, which <em>is</em> the point the cover missed. That dichotomy is König's lemma, and here it is Tychonoff.</p>
+
+  <figure>
+    <div class="board">
+      <svg id="stage" viewBox="0 0 940 656" role="img" aria-label="A binary tree that morphs into the Cantor set, with subtrees being pruned by a cover.">
+        <g id="art"></g>
+      </svg>
+    </div>
+    <div class="rack">
+      <div class="grp"><span>the cover</span>
+        <div class="seg" id="preset">
+          <button data-p="family" aria-pressed="true">the 1ᵏ0 family</button>
+          <button data-p="empty" aria-pressed="false">empty — paint your own</button>
+        </div>
+      </div>
+      <div class="grp"><span>&nbsp;</span>
+        <label class="chk"><input type="checkbox" id="cap" checked> cap the all-ones branch</label>
+      </div>
+      <div class="grp"><span>the walk</span>
+        <button class="act hot" id="run">Run</button>
+      </div>
+      <div class="grp"><span>&nbsp;</span><button class="act" id="step">Step</button></div>
+      <div class="grp"><span>&nbsp;</span><button class="act" id="reset">Reset</button></div>
+      <div class="grp"><span>tree &nbsp;⟷&nbsp; Cantor set</span>
+        <input type="range" id="morph" min="0" max="100" step="1" value="0">
+      </div>
+    </div>
+    <figcaption>Click any node to add or remove a cylinder there. Uncheck the cap and the same walk runs off the right-hand edge of the tree forever — that escaping path is a point of the space, and it proves the family was never a cover. In the Cantor view the deepest bars are drawn at a 2px minimum so they stay visible; their positions are exact.</figcaption>
+  </figure>
+
+  <div class="blocks">
+    <div><b>one address, two pictures</b>Every node carries a bit string. The slider moves it between the dyadic position that makes a tree and the triadic position that makes the Cantor set — one object, not two illustrations.</div>
+    <div><b>stepped, not instant</b>The order of the walk is where the finiteness comes from, so the eye has to see it happen. Step through it once before pressing Run.</div>
+    <div><b>the two verdicts</b>A finite subcover is a list. A failure is a point. Both are concrete objects the walk hands you — no proof by contradiction required.</div>
+    <div><b>why it terminates</b>Every cylinder is decided by some finite depth. Past the deepest one, a node is either already owned or free forever, so the walk cannot run long without escaping.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const W=940, H=656, D=7;
+const PL=76, PR=872, TOP=96, BOT=430;
+const DY=(BOT-TOP)/D;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const st = {cover:[], morph:0, events:[], cursor:0, escape:null, timer:null};
+
+function familyCover(cap){
+  const c=[];
+  for(let k=0;k<D;k++) c.push('1'.repeat(k)+'0');
+  if(cap) c.push('1'.repeat(D));
+  return c;
+}
+
+/* ---- geometry: one address string drives both layouts ---- */
+const dyadic = a => { let v=0; for(const ch of a) v=v*2+(ch==='1'?1:0);
+                      return (v+0.5)/Math.pow(2,a.length); };
+function triadic(a){ let s=0; for(let j=0;j<a.length;j++) if(a[j]==='1') s += 2/Math.pow(3,j+1);
+                     return {s, w:Math.pow(3,-a.length)}; }
+function place(a){
+  const m=st.morph, d=a.length;
+  const t=triadic(a);
+  const cx = PL + (PR-PL)*( (1-m)*dyadic(a) + m*(t.s+t.w/2) );
+  const wTree = 9, wCan = Math.max(2, t.w*(PR-PL));
+  return {cx, y: TOP + d*DY, hw: ((1-m)*wTree + m*wCan)/2};
+}
+
+/* ---- the walk ---- */
+function claimedBy(a){ return st.cover.find(c => a.startsWith(c)); }
+function plan(){
+  const ev=[]; let esc=null;
+  (function rec(a){
+    if(esc) return;
+    const s=claimedBy(a);
+    if(s!==undefined){ ev.push({a, act:'claim', by:s}); return; }
+    if(a.length>=D){ ev.push({a, act:'escape'}); esc=a; return; }
+    ev.push({a, act:'descend'});
+    rec(a+'0'); rec(a+'1');
+  })('');
+  st.events=ev; st.escape=esc; st.cursor=0;
+}
+
+/* status of the tree after `cursor` events */
+function statusMap(){
+  const claimed=new Map(), seen=new Set(); let escAt=null, order=0;
+  for(let i=0;i<st.cursor;i++){
+    const e=st.events[i];
+    seen.add(e.a);
+    if(e.act==='claim') claimed.set(e.a, {by:e.by, n:order++});
+    if(e.act==='escape') escAt=e.a;
+  }
+  return {claimed, seen, escAt};
+}
+function ownerOf(a, claimed){
+  for(let L=0;L<=a.length;L++){ const p=a.slice(0,L); if(claimed.has(p)) return claimed.get(p); }
+  return null;
+}
+
+function render(){
+  const g=[], {claimed,seen,escAt}=statusMap();
+  const cur = st.cursor>0 ? st.events[st.cursor-1] : null;
+
+  g.push(`<rect x="40" y="${TOP-52}" width="${W-80}" height="${BOT-TOP+96}" fill="#10162a" stroke="#20283f"/>`);
+  g.push(`<text x="40" y="${TOP-62}" fill="#4d5675" font-size="10" letter-spacing="2.2">{0,1}ᴺ AS A TREE — A POINT IS A PATH ALL THE WAY DOWN</text>`);
+  g.push(`<text x="${W-40}" y="${TOP-62}" fill="#4d5675" font-size="10" letter-spacing="1.6" text-anchor="end">DEPTH ${D} SHOWN</text>`);
+  for(let d=0;d<=D;d++)
+    g.push(`<text x="52" y="${TOP+d*DY+4}" fill="#3d4666" font-size="9.5">${d}</text>`);
+
+  // edges first, fading out as the Cantor view takes over
+  const eop=(1-st.morph)*0.85;
+  if(eop>0.02){
+    const walk=(a)=>{
+      if(a.length>=D) return;
+      for(const b of ['0','1']){
+        const p=place(a), q=place(a+b);
+        const own=ownerOf(a+b, claimed);
+        g.push(`<line x1="${p.cx}" y1="${p.y}" x2="${q.cx}" y2="${q.y}"
+                stroke="${own?'var(--pin)':(escAt&&escAt.startsWith(a+b)?'var(--esc)':'#28304e')}"
+                stroke-opacity="${eop*(own?0.5:1)}" stroke-width="${escAt&&escAt.startsWith(a+b)?2:1}"/>`);
+        walk(a+b);
+      }
+    };
+    walk('');
+  }
+
+  // nodes
+  const nodes=[];
+  (function collect(a){ nodes.push(a); if(a.length<D){ collect(a+'0'); collect(a+'1'); } })('');
+  for(const a of nodes){
+    const p=place(a), own=ownerOf(a, claimed);
+    const isCyl = st.cover.includes(a);
+    const onEsc = escAt!==null && escAt.startsWith(a);
+    let fill='#222a44', op=1;
+    if(own){ fill='var(--pin)'; op = own.n%2 ? .40 : .62; }
+    if(onEsc){ fill='var(--esc)'; op=.85; }
+    if(!own && !onEsc && !seen.has(a)) { fill='#1b2238'; }
+    g.push(`<rect x="${p.cx-p.hw}" y="${p.y-3}" width="${p.hw*2}" height="6" rx="1.5"
+            fill="${fill}" fill-opacity="${op}"/>`);
+    if(isCyl)
+      g.push(`<rect x="${p.cx-p.hw-2.5}" y="${p.y-6}" width="${p.hw*2+5}" height="12" rx="2"
+              fill="none" stroke="var(--pin)" stroke-width="1.6"/>`);
+    if(cur && cur.a===a)
+      g.push(`<circle cx="${p.cx}" cy="${p.y}" r="9" fill="none" stroke="${cur.act==='escape'?'var(--esc)':'var(--free)'}" stroke-width="2"/>`);
+  }
+
+  /* ---------------- readouts ---------------- */
+  const RY=BOT+78, done = st.cursor>=st.events.length;
+  const used=[...new Set(st.events.slice(0,st.cursor).filter(e=>e.act==='claim').map(e=>e.by))];
+  const depth=Math.max(0,...st.events.slice(0,st.cursor).map(e=>e.a.length));
+
+  g.push(`<text x="40" y="${RY}" fill="#8792b3" font-size="11.5" letter-spacing="2">CYLINDERS IN THE COVER</text>`);
+  g.push(`<text x="40" y="${RY+40}" fill="var(--pin)" font-size="34">${st.cover.length}</text>`);
+  g.push(`<text x="248" y="${RY}" fill="#8792b3" font-size="11.5" letter-spacing="2">CLAIMED SO FAR</text>`);
+  g.push(`<text x="248" y="${RY+40}" fill="var(--pin)" font-size="34">${used.length}</text>`);
+  g.push(`<text x="430" y="${RY}" fill="#8792b3" font-size="11.5" letter-spacing="2">DEPTH REACHED</text>`);
+  g.push(`<text x="430" y="${RY+40}" fill="var(--free)" font-size="34">${depth}</text>`);
+
+  g.push(`<text x="600" y="${RY}" fill="#8792b3" font-size="11.5" letter-spacing="2">VERDICT</text>`);
+  const VX=40, VY=RY+74;
+  let v1,v2,vc;
+  if(!done){ v1='walking…'; v2=`${st.cursor} of ${st.events.length} steps`; vc='#67709a'; }
+  else if(st.cover.length===0){ vc='#67709a'; v1='no cylinders yet'; v2='click a node, or load the 1ᵏ0 family'; }
+  else if(st.escape!==null){
+    vc='var(--esc)'; v1='not a cover';
+    v2=`nobody claims the subtree at ${st.escape} — every path through it is missed`;
+  }
+  else { vc='var(--pin)'; v1=`finite subcover — ${used.length} cylinders`;
+          v2 = used.length>9 ? used.slice(0,9).join('  ')+'  …' : (used.join('  ') || '—'); }
+  g.push(`<text x="600" y="${RY+40}" fill="${vc}" font-size="20">${v1}</text>`);
+  g.push(`<text x="${VX}" y="${VY}" fill="#8792b3" font-size="12">${v2}</text>`);
+  if(done && st.escape!==null && st.cover.length>0)
+    g.push(`<text x="${VX}" y="${VY+22}" fill="var(--esc)" font-size="12">e.g. the point ${st.escape}000… — Cantor coordinate ${triadic(st.escape).s.toFixed(6)}</text>`);
+
+  document.getElementById('art').innerHTML=g.join('');
+}
+
+/* ---------------- controls ---------------- */
+function stop(){ if(st.timer){ clearInterval(st.timer); st.timer=null;
+                 document.getElementById('run').textContent='Run'; } }
+function reload(){
+  stop();
+  const p=document.querySelector('#preset button[aria-pressed="true"]').dataset.p;
+  if(p==='family') st.cover=familyCover(document.getElementById('cap').checked);
+  plan(); render();
+}
+document.getElementById('preset').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...e.currentTarget.children].forEach(c=>c.setAttribute('aria-pressed', c===b));
+  if(b.dataset.p==='empty') st.cover=[];
+  reload();
+});
+document.getElementById('cap').addEventListener('change', reload);
+document.getElementById('reset').addEventListener('click', ()=>{ stop(); plan(); render(); });
+document.getElementById('step').addEventListener('click', ()=>{
+  stop(); if(st.cursor<st.events.length){ st.cursor++; render(); }
+});
+document.getElementById('run').addEventListener('click', ()=>{
+  if(st.timer){ stop(); return; }
+  if(st.cursor>=st.events.length) st.cursor=0;
+  if(REDUCED){ st.cursor=st.events.length; render(); return; }
+  document.getElementById('run').textContent='Pause';
+  st.timer=setInterval(()=>{
+    if(st.cursor>=st.events.length){ stop(); return; }
+    st.cursor++; render();
+  }, 190);
+});
+document.getElementById('morph').addEventListener('input', e=>{ st.morph=+e.target.value/100; render(); });
+
+document.getElementById('stage').addEventListener('pointerdown', e=>{
+  const svg=document.getElementById('stage'), r=svg.getBoundingClientRect();
+  const px=(e.clientX-r.left)*(W/r.width), py=(e.clientY-r.top)*(H/r.height);
+  const d=Math.round((py-TOP)/DY);
+  if(d<0||d>D||Math.abs(TOP+d*DY-py)>13) return;
+  let best=null, bd=1e9;
+  (function collect(a){
+    if(a.length===d){ const p=place(a); const dd=Math.abs(p.cx-px);
+                      if(dd<bd){bd=dd;best=a;} return; }
+    if(a.length<D){ collect(a+'0'); collect(a+'1'); }
+  })('');
+  if(best===null || bd>16) return;
+  stop();
+  const i=st.cover.indexOf(best);
+  if(i>=0) st.cover.splice(i,1); else st.cover.push(best);
+  st.cover.sort((x,y)=>x.length-y.length||x.localeCompare(y));
+  plan(); render();
+});
+
+reload();
+})();
+</script>
+</body>
+</html>

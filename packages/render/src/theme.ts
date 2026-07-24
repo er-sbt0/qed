@@ -23,6 +23,9 @@ const vars = (dark: boolean): string =>
   --mr-reject-soft: rgba(248, 113, 113, 0.16);
   --mr-neutral: #97a1b8;
   --mr-neutral-soft: rgba(151, 161, 184, 0.16);
+  --mr-free: #fbbf24;
+  --mr-constraint: #60a5fa;
+  --mr-escape: #34d399;
   --mr-still: #c9a86a;
   --mr-token-bg: #262c37;
   --mr-shadow: rgba(0, 0, 0, 0.5);
@@ -41,6 +44,9 @@ const vars = (dark: boolean): string =>
   --mr-reject-soft: rgba(185, 28, 28, 0.12);
   --mr-neutral: #5b6577;
   --mr-neutral-soft: rgba(91, 101, 119, 0.12);
+  --mr-free: #b45309;
+  --mr-constraint: #1d4ed8;
+  --mr-escape: #047857;
   --mr-still: #a16207;
   --mr-token-bg: #e6eaf3;
   --mr-shadow: rgba(30, 40, 60, 0.18);
@@ -59,12 +65,19 @@ export const THEME_CSS = `
   border-radius: 14px;
   padding: 16px;
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
   align-items: stretch;
   position: relative;
 }
 .mr-canvas {
-  flex: 1 1 auto;
+  /* The figure is the artifact: it claims the row first. A generous basis
+     (bigger than the narration's) means that on anything narrower than
+     roughly basis+basis+gap the pair wraps — narration drops BELOW the
+     figure, rather than always sitting in a fixed side column that caps how
+     wide a figure is allowed to grow. On a wide stage there is still room for
+     both side by side, unchanged from before. */
+  flex: 3 1 480px;
   display: flex;
   flex-wrap: wrap;
   gap: 18px;
@@ -84,8 +97,8 @@ export const THEME_CSS = `
   min-width: 0;
 }
 .mr-narration {
-  flex: 0 1 340px;
-  min-width: 260px;
+  flex: 1 1 280px;
+  min-width: 220px;
   background: none;
   border: 0;
   border-left: 1px solid var(--mr-line);
@@ -223,9 +236,19 @@ export const THEME_CSS = `
 .mr-history .mr-axis { stroke: var(--mr-line); stroke-width: 1; }
 .mr-history text { font-size: 10px; fill: var(--mr-muted); }
 
-/* continuous views: plot / region / strip / riemann / plane / vectors */
-.mr-plotsvg { overflow: hidden; display: block; }
+/* continuous views: plot / region / strip / riemann / plane / vectors
+   The figure fills the space its panel is given: the SVG's viewBox keeps the
+   logical (mapping) dimensions frame.ts computed with, but width/height here
+   let it grow with its container — up to a generous cap so a lone figure in
+   a wide stage does not blow up to something absurd. 640px is ~2x the widest
+   provider's logical width (plot's 320). */
+.mr-plotsvg { overflow: hidden; display: block; width: 100%; height: auto; max-width: 640px; }
+/* The geometry escape hatch is often a wide figure (a coordinate rack, a long
+   axis) — it claims the space it needs rather than being capped to a plot box. */
+.mr-plotsvg.mr-diagram-svg { max-width: 1040px; }
 .mr-plotsvg .mr-axis { stroke: var(--mr-line); stroke-width: 1.2; fill: none; }
+.mr-plotsvg .mr-tick { stroke: var(--mr-line); stroke-width: 1; }
+.mr-plotsvg .mr-tick-label { font-size: 9.5px; fill: var(--mr-muted); font-family: ui-monospace, monospace; }
 .mr-curve { fill: none; stroke: var(--mr-accent); stroke-width: 2.2; stroke-linejoin: round; }
 .mr-backdrop { fill: none; stroke: var(--mr-muted); stroke-width: 1.4; opacity: 0.35; }
 .mr-plot-label { font-size: 11px; fill: var(--mr-muted); }
@@ -281,7 +304,28 @@ export const THEME_CSS = `
 .mr-tiling-edge.mr-interior { stroke: var(--mr-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.65; }
 .mr-tiling-edge.mr-boundary { stroke: var(--mr-accent); stroke-width: 2.2; }
 .mr-plot, .mr-region, .mr-strip, .mr-riemann, .mr-plane, .mr-vectors,
-.mr-field, .mr-heatmap, .mr-loop, .mr-tiling { line-height: 0; }
+.mr-field, .mr-heatmap, .mr-loop, .mr-tiling, .mr-diagram { line-height: 0; }
+
+/* diagram escape hatch: low-level marks the author draws in a named frame.
+   Colour flows through the CSS color property so a mark's fill/stroke both pick
+   up the role, and the marks layer defaults to the accent when no role is set. */
+.mr-marks { color: var(--mr-accent); }
+.mr-mark { transition: opacity 0.3s ease; }
+.mr-mark-point { fill: currentColor; stroke: none; }
+.mr-mark-path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mr-mark-path.mr-filled { fill: currentColor; fill-opacity: 0.18; }
+/* band idiom: a soft column-cell. When filled, drop the hard outline and fade
+   the fill further, so the strip reads as a faint cell behind the marks rather
+   than a boxed rectangle; an unfilled band keeps the base stroke as an outline. */
+.mr-mark-path.mr-band.mr-filled { stroke: none; fill-opacity: 0.1; }
+.mr-mark-text { fill: currentColor; font-size: 11px; }
+.mr-mark-glyph { fill: currentColor; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.mr-mark-glyph.mr-ring, .mr-mark-glyph.mr-cross, .mr-mark-glyph.mr-arrow { fill: none; }
+.mr-role-free { color: var(--mr-free); }
+.mr-role-constraint { color: var(--mr-constraint); }
+.mr-role-escape { color: var(--mr-escape); }
+.mr-role-reject { color: var(--mr-reject); }
+.mr-role-neutral { color: var(--mr-neutral); }
 
 /* readout */
 .mr-readout { min-width: 132px; font-size: 13px; }

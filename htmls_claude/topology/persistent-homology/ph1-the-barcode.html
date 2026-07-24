@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The barcode — a hole that outlives the noise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c101d; --panel:#141a2c; --rule:#26304d; --grid:#1a2137;
+    --free:#f0b24a; --pin:#8ea2ff; --esc:#5fe3b0; --box:#ff5f7e;
+    --text:#dde2f0; --dim:#7f89a8; --faint:#4d5675;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text)}
+  body{font-family:Spectral,Georgia,serif;font-weight:300;padding:34px 22px 70px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+  h1{font-size:clamp(26px,4.4vw,40px);font-weight:300;letter-spacing:-.015em;margin:0 0 12px}
+  h1 em{font-style:italic;color:var(--esc);font-weight:400}
+  .lede{max-width:64ch;color:#b9c1d6;font-size:17px;margin:0 0 26px}
+  i.v{font-style:italic;color:var(--text)}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 6px 0;overflow:hidden}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  svg text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .rack{display:flex;flex-wrap:wrap;gap:22px 30px;align-items:flex-end;border:1px solid var(--rule);border-top:none;background:#111627;padding:16px 18px 18px}
+  .grp{display:flex;flex-direction:column;gap:8px}
+  .grp>span{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .seg{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden;flex-wrap:wrap}
+  button{font-family:'IBM Plex Mono',monospace;font-size:12px;background:transparent;color:var(--dim);border:0;padding:8px 13px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button+button{border-left:1px solid var(--rule)}
+  button:hover{color:var(--text);background:#1b2238}
+  .seg button[aria-pressed="true"]{background:var(--esc);color:#052018}
+  .act{border:1px solid var(--rule);border-radius:2px}
+  .act.hot{border-color:var(--free);color:var(--free)}
+  button:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+  input[type=range]{width:220px;accent-color:var(--free);background:transparent}
+  input[type=range]:focus-visible{outline:2px solid var(--pin);outline-offset:4px}
+  .scaleval{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--free)}
+  label.chk{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);cursor:pointer;padding:7px 0}
+  label.chk input{accent-color:var(--esc)}
+  figcaption{margin-top:16px;color:var(--dim);font-size:14.5px;max-width:72ch}
+  .blocks{margin-top:34px;border-top:1px solid var(--rule);padding-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 26px}
+  .blocks div{font-size:14.5px;color:#a8b1c8}
+  .blocks b{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--esc);margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Topological data analysis · persistent homology, executed</p>
+  <h1>The circle was never drawn. Grow one dial and it <em>announces itself</em>.</h1>
+  <p class="lede">A cloud of points has no shape — until you fix a scale. Grow a ball of radius ε/2 around each point; whenever two balls meet, connect them; whenever three meet, fill the triangle. Now sweep ε from nothing to everything and every hole in the data is born at one scale and filled at another. Its <em>lifespan</em> is a bar. The long bar is a real feature; the short ones are the sampling. Nothing here is asserted — the Betti numbers are computed from the complex you are looking at, by the persistence algorithm over 𝔽₂, live.</p>
+
+  <figure>
+    <div class="board">
+      <svg id="stage" viewBox="0 0 940 666" role="img" aria-label="A point cloud growing into a simplicial complex, beside a persistence barcode of its homology.">
+        <g id="art"></g>
+      </svg>
+    </div>
+    <div class="rack">
+      <div class="grp"><span>the data</span>
+        <div class="seg" id="preset">
+          <button data-p="circle" aria-pressed="true">a circle</button>
+          <button data-p="two">two circles</button>
+          <button data-p="eight">figure eight</button>
+          <button data-p="clusters">three clusters</button>
+          <button data-p="blob">a blob</button>
+        </div>
+      </div>
+      <div class="grp"><span>the scale &nbsp;ε</span>
+        <input type="range" id="eps" min="0" max="1000" step="1" value="340">
+        <span class="scaleval" id="epstxt">ε = 0.00</span>
+      </div>
+      <div class="grp"><span>the sweep</span><button class="act hot" id="sweep">Sweep ε →</button></div>
+      <div class="grp"><span>the longest loop</span>
+        <label class="chk"><input type="checkbox" id="trace" checked> trace it on the cloud</label>
+      </div>
+      <div class="grp"><span>the cloud</span><button class="act" id="clear">Clear — place your own</button></div>
+    </div>
+    <figcaption>Click empty space to drop a point; click a point to remove it. The disks have radius ε/2, so two disks touch exactly when their points are within ε — that is when the edge snaps in, and the Vietoris–Rips complex is built from nothing else. The barcode is recomputed only when the cloud changes; moving ε just slides the read-head across scales that were all there at once.</figcaption>
+  </figure>
+
+  <div class="blocks">
+    <div><b>computed, not claimed</b>β₀ and β₁ are read off a real 𝔽₂ persistence reduction of the whole filtration — not counted by eye, not hard-coded. Edit the cloud and the barcode re-derives.</div>
+    <div><b>the long bar is the truth</b>A feature that survives a wide range of scales is structure; one that is born and dies almost immediately is noise. Persistence is exactly the length of the bar.</div>
+    <div><b>one object, every scale</b>There is no single "right" ε. The barcode holds all of them at once, which is the whole point — shape is a function of scale, and this shows the function.</div>
+    <div><b>a loop, not a number</b>The longest H₁ bar is traced in green — its birth edge plus a path recovered by search through the edges already present. It is <i class="v">one</i> representative; every homologous loop around the same hole is an equally valid witness, which is why it is drawn as a choice, not a canonical object.</div>
+    <div><b>the honest omission</b>Only the single longest loop is traced; the shorter bars are left as bars. Rips is used, truncated at triangles — so voids (H₂) are computed away, not displayed.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const W=940, H=666;
+const CX0=44, CY0=96, CS=452;                 // point-cloud square
+const BX0=556, BXW=344;                        // barcode column
+const HP0=122, HP0H=168;                        // H0 panel
+const HP1=330, HP1H=168;                        // H1 panel
+const AXY=516;                                  // barcode axis
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const st = { pts:[], epsFrac:0.34, epsMax:1, pers:null, timer:null, trace:true };
+
+/* ---------------- point generators ---------------- */
+const rnd = (a,b)=> a + Math.random()*(b-a);
+function ring(cx,cy,r,n,jit){ const o=[]; for(let i=0;i<n;i++){ const t=i/n*2*Math.PI;
+  o.push([cx+r*Math.cos(t)+rnd(-jit,jit), cy+r*Math.sin(t)+rnd(-jit,jit)]); } return o; }
+function blob(cx,cy,s,n){ const o=[]; for(let i=0;i<n;i++){
+  const a=rnd(0,2*Math.PI), r=s*Math.sqrt(Math.random());
+  o.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]); } return o; }
+function gen(kind){
+  if(kind==='circle')  return ring(0.5,0.5,0.34,20,0.014);
+  if(kind==='two')     return [...ring(0.30,0.5,0.17,13,0.012), ...ring(0.72,0.5,0.17,13,0.012)];
+  if(kind==='eight')   return [...ring(0.35,0.5,0.17,13,0.012), ...ring(0.66,0.5,0.17,13,0.012)];
+  if(kind==='clusters')return [...blob(0.28,0.34,0.075,10), ...blob(0.70,0.36,0.075,10), ...blob(0.5,0.72,0.075,10)];
+  if(kind==='blob')    return blob(0.5,0.5,0.20,26);
+  return [];
+}
+
+/* ---------------- geometry ---------------- */
+const sx = u => CX0 + u*CS, sy = v => CY0 + v*CS;
+const dist = (p,q)=> Math.hypot(p[0]-q[0], p[1]-q[1]);
+
+/* ---------------- persistent homology over 𝔽₂ ---------------- */
+function symdiff(a,b){ const out=[]; let i=0,j=0;
+  while(i<a.length&&j<b.length){
+    if(a[i]===b[j]){i++;j++;} else if(a[i]<b[j]) out.push(a[i++]); else out.push(b[j++]); }
+  while(i<a.length) out.push(a[i++]); while(j<b.length) out.push(b[j++]); return out; }
+
+function computePersistence(pts){
+  const n=pts.length;
+  if(n===0) return {pairs:[], maxPair:1, nEdge:0};
+  // distance matrix
+  const D=[]; let maxPair=1e-6;
+  for(let i=0;i<n;i++){ D[i]=[]; for(let j=0;j<n;j++){ const d=i===j?0:dist(pts[i],pts[j]); D[i][j]=d; if(d>maxPair)maxPair=d; } }
+
+  // simplices: vertices, edges, triangles (Rips: value = longest pairwise edge)
+  const S=[];
+  for(let i=0;i<n;i++) S.push({v:[i], val:0, dim:0, key:'v'+i});
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) S.push({v:[i,j], val:D[i][j], dim:1, key:i+'_'+j});
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) for(let k=j+1;k<n;k++)
+    S.push({v:[i,j,k], val:Math.max(D[i][j],D[i][k],D[j][k]), dim:2, key:i+'_'+j+'_'+k});
+
+  // filtration order: value, then dimension (faces before cofaces), then key
+  S.sort((a,b)=> a.val-b.val || a.dim-b.dim || (a.key<b.key?-1:1));
+  const idx=new Map(); S.forEach((s,i)=>idx.set(s.key,i));
+  const boundary=s=>{
+    if(s.dim===0) return [];
+    if(s.dim===1) return [idx.get('v'+s.v[0]), idx.get('v'+s.v[1])].sort((x,y)=>x-y);
+    const [a,b,c]=s.v; return [idx.get(a+'_'+b), idx.get(a+'_'+c), idx.get(b+'_'+c)].sort((x,y)=>x-y);
+  };
+
+  // standard reduction: reduce each column until its low is unique
+  const M=S.length, R=S.map(boundary), low2col=new Map(), pairs=[];
+  for(let j=0;j<M;j++){
+    let col=R[j];
+    while(col.length){
+      const l=col[col.length-1];
+      if(low2col.has(l)) col=symdiff(col, R[low2col.get(l)]); else break;
+    }
+    R[j]=col;
+    if(col.length){
+      const l=col[col.length-1]; low2col.set(l,j);
+      const bs=S[l], ds=S[j];
+      if(ds.val > bs.val + 1e-9){
+        const pr={birth:bs.val, death:ds.val, dim:bs.dim};
+        if(bs.dim===1){ pr.bidx=l; pr.bedge=bs.v; }   // remember the edge that opened this loop
+        pairs.push(pr);
+      }
+    }
+  }
+  // unpaired positive simplices → infinite bars (β at ε=∞)
+  const killed=new Set(low2col.keys());
+  for(let i=0;i<M;i++) if(R[i].length===0 && !killed.has(i)){
+    const pr={birth:S[i].val, death:Infinity, dim:S[i].dim};
+    if(S[i].dim===1){ pr.bidx=i; pr.bedge=S[i].v; }
+    pairs.push(pr);
+  }
+
+  // representative of the longest H₁ class: its birth edge + a path through
+  // the edges already present, recovered by BFS in the sub-1-skeleton at birth.
+  let best=null;
+  for(const p of pairs) if(p.dim===1){
+    const life=(p.death===Infinity?maxPair:p.death)-p.birth;
+    if(!best || life>best.life) best={p, life};
+  }
+  let rep=null;
+  if(best){
+    const bi=best.p.bidx, [u,v]=best.p.bedge;
+    const adj=Array.from({length:n},()=>[]);
+    for(let e=0;e<bi;e++){ const s=S[e]; if(s.dim===1){ const [a,b]=s.v; adj[a].push(b); adj[b].push(a); } }
+    const prev=new Array(n).fill(-1), seen=new Array(n).fill(false); seen[u]=true;
+    const q=[u]; let qi=0;
+    while(qi<q.length){ const x=q[qi++]; if(x===v) break;
+      for(const y of adj[x]) if(!seen[y]){ seen[y]=true; prev[y]=x; q.push(y); } }
+    if(seen[v]){ const cyc=[]; let x=v; while(x!==-1){ cyc.push(x); x=prev[x]; }
+      rep={cycle:cyc, birth:best.p.birth, death:best.p.death, life:best.life}; }
+  }
+
+  return {pairs, maxPair, rep, nEdge: n*(n-1)/2};
+}
+
+const alive=(p,e)=> p.birth<=e+1e-9 && e<p.death-1e-9;
+const betti=(k,e)=> st.pers.pairs.filter(p=>p.dim===k && alive(p,e)).length;
+
+/* ---------------- render ---------------- */
+function render(){
+  const g=[], eps=st.epsFrac*st.epsMax, R=eps/2*CS, n=st.pts.length;
+
+  /* ===== the cloud panel ===== */
+  g.push(`<rect x="${CX0-4}" y="${CY0-48}" width="${CS+8}" height="${CS+56}" fill="#10162a" stroke="#20283f"/>`);
+  g.push(`<text x="${CX0-4}" y="${CY0-58}" fill="#4d5675" font-size="10" letter-spacing="2.2">THE VIETORIS–RIPS COMPLEX AT SCALE ε</text>`);
+
+  // active simplices at this ε
+  let nE=0, nF=0;
+  const edges=[], tris=[];
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) if(dist(st.pts[i],st.pts[j])<=eps){ edges.push([i,j]); nE++; }
+  const near=(i,j)=>dist(st.pts[i],st.pts[j])<=eps;
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) for(let k=j+1;k<n;k++)
+    if(near(i,j)&&near(i,k)&&near(j,k)){ tris.push([i,j,k]); nF++; }
+
+  // balls (radius ε/2)
+  for(const p of st.pts)
+    g.push(`<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="${R.toFixed(1)}" fill="var(--free)" fill-opacity="0.055" stroke="var(--free)" stroke-opacity="0.14"/>`);
+  // filled triangles
+  for(const [i,j,k] of tris){
+    const a=st.pts[i],b=st.pts[j],c=st.pts[k];
+    g.push(`<polygon points="${sx(a[0]).toFixed(1)},${sy(a[1]).toFixed(1)} ${sx(b[0]).toFixed(1)},${sy(b[1]).toFixed(1)} ${sx(c[0]).toFixed(1)},${sy(c[1]).toFixed(1)}" fill="var(--pin)" fill-opacity="0.10"/>`);
+  }
+  // edges
+  for(const [i,j] of edges){
+    const a=st.pts[i],b=st.pts[j];
+    g.push(`<line x1="${sx(a[0]).toFixed(1)}" y1="${sy(a[1]).toFixed(1)}" x2="${sx(b[0]).toFixed(1)}" y2="${sy(b[1]).toFixed(1)}" stroke="var(--pin)" stroke-opacity="0.55" stroke-width="1.1"/>`);
+  }
+
+  // the representative of the longest H₁ class — its birth edge plus a path
+  // through the earlier edges. Bright while the loop is open; dashed once filled.
+  const rep=st.pers.rep, traceOn=st.trace && rep && eps>=rep.birth-1e-9;
+  const loopSet=new Set(), dead=rep && eps>=rep.death-1e-9;
+  if(traceOn){
+    rep.cycle.forEach(i=>loopSet.add(i));
+    const pts=rep.cycle.map(i=>`${sx(st.pts[i][0]).toFixed(1)},${sy(st.pts[i][1]).toFixed(1)}`).join(' ');
+    if(dead){
+      g.push(`<polygon points="${pts}" fill="none" stroke="var(--esc)" stroke-opacity="0.32" stroke-width="1.4" stroke-dasharray="4 4"/>`);
+    } else {
+      g.push(`<polygon points="${pts}" fill="var(--esc)" fill-opacity="0.045" stroke="var(--esc)" stroke-opacity="0.18" stroke-width="8" stroke-linejoin="round"/>`);
+      g.push(`<polygon points="${pts}" fill="none" stroke="var(--esc)" stroke-opacity="0.95" stroke-width="2.4" stroke-linejoin="round"/>`);
+    }
+  }
+
+  // points — loop members filled, the rest hollow
+  for(let i=0;i<n;i++){ const p=st.pts[i], on=traceOn && !dead && loopSet.has(i);
+    g.push(on
+      ? `<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="4.3" fill="var(--esc)" stroke="#0c101d" stroke-width="1.2"/>`
+      : `<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="3.4" fill="#0c101d" stroke="var(--esc)" stroke-width="1.4"/>`);
+  }
+  if(traceOn && !dead)
+    g.push(`<text x="${CX0}" y="${CY0-32}" fill="var(--esc)" font-size="10">green: one representative of the longest H₁ loop — many are homologous to it</text>`);
+  if(n===0)
+    g.push(`<text x="${CX0+CS/2}" y="${CY0+CS/2}" fill="#4d5675" font-size="13" text-anchor="middle">click to place points</text>`);
+
+  // live simplex counts
+  g.push(`<text x="${CX0}" y="${CY0+CS+2}" fill="#67709a" font-size="10.5">V ${n}   ·   E ${nE}   ·   F ${nF}   — the complex at ε=${eps.toFixed(3)}</text>`);
+
+  /* ===== the barcode panel ===== */
+  const bx = e => BX0 + Math.min(e,st.epsMax)/st.epsMax*BXW;
+  g.push(`<rect x="${BX0-4}" y="${CY0-48}" width="${BXW+22}" height="${AXY-CY0+66}" fill="#10162a" stroke="#20283f"/>`);
+  g.push(`<text x="${BX0-4}" y="${CY0-58}" fill="#4d5675" font-size="10" letter-spacing="2.2">THE PERSISTENCE BARCODE — EVERY HOLE'S LIFESPAN</text>`);
+
+  drawBars(g, 0, HP0, HP0H, 'var(--pin)', 'H₀ — CONNECTED COMPONENTS', bx);
+  drawBars(g, 1, HP1, HP1H, 'var(--esc)', 'H₁ — INDEPENDENT LOOPS', bx);
+
+  // axis + ticks
+  g.push(`<line x1="${BX0}" y1="${AXY}" x2="${BX0+BXW}" y2="${AXY}" stroke="#2a3352" stroke-width="1.5"/>`);
+  for(let t=0;t<=4;t++){ const e=t/4*st.epsMax, x=bx(e);
+    g.push(`<line x1="${x}" y1="${AXY}" x2="${x}" y2="${AXY+5}" stroke="#2a3352"/>`);
+    g.push(`<text x="${x}" y="${AXY+18}" fill="#4d5675" font-size="9.5" text-anchor="middle">${e.toFixed(2)}</text>`);
+  }
+  g.push(`<text x="${BX0+BXW}" y="${AXY+32}" fill="#4d5675" font-size="10" text-anchor="end">scale ε →</text>`);
+
+  // the read-head at current ε, spanning both panels
+  const rx=bx(eps);
+  g.push(`<line x1="${rx.toFixed(1)}" y1="${HP0-14}" x2="${rx.toFixed(1)}" y2="${AXY}" stroke="var(--free)" stroke-width="1.4" stroke-opacity="0.9"/>`);
+  g.push(`<text x="${rx.toFixed(1)}" y="${HP0-20}" fill="var(--free)" font-size="10.5" text-anchor="middle">ε = ${eps.toFixed(3)}</text>`);
+
+  /* ===== readouts ===== */
+  const b0=betti(0,eps), b1=betti(1,eps);
+  const RY=566;
+  g.push(`<line x1="40" y1="${RY-14}" x2="${W-40}" y2="${RY-14}" stroke="#242c47"/>`);
+  g.push(`<text x="44" y="${RY+8}" fill="#8792b3" font-size="11.5" letter-spacing="2">COMPONENTS  β₀</text>`);
+  g.push(`<text x="44" y="${RY+52}" fill="var(--pin)" font-size="42">${b0}</text>`);
+  g.push(`<text x="210" y="${RY+8}" fill="#8792b3" font-size="11.5" letter-spacing="2">LOOPS  β₁</text>`);
+  g.push(`<text x="210" y="${RY+52}" fill="var(--esc)" font-size="42">${b1}</text>`);
+
+  g.push(`<text x="340" y="${RY+8}" fill="#8792b3" font-size="11.5" letter-spacing="2">VERDICT</text>`);
+  let v;
+  if(n<3) v='place at least three points to have any homology to speak of';
+  else if(b1===0 && b0===1) v='one blob, no holes — at this scale the data is contractible';
+  else if(b1===0 && b0>1) v=`${b0} separate pieces and no loops — read β₀ off the number of long H₀ bars`;
+  else if(b1===1) v='a single loop persists here — this scale sees a circle in the data';
+  else v=`${b1} independent loops at this scale`;
+  g.push(`<text x="340" y="${RY+34}" fill="var(--text)" font-size="15">${v}</text>`);
+  // longest H1 bar = the honest feature
+  const h1=st.pers.pairs.filter(p=>p.dim===1).map(p=>({...p, life:(p.death===Infinity?st.epsMax:p.death)-p.birth}))
+                        .sort((a,b)=>b.life-a.life);
+  if(h1.length){
+    const t=h1[0];
+    g.push(`<text x="340" y="${RY+58}" fill="#67709a" font-size="12">longest loop: born ε=${t.birth.toFixed(3)}, ${t.death===Infinity?'never filled':'filled ε='+t.death.toFixed(3)} — lifespan ${t.life.toFixed(3)}</text>`);
+    g.push(`<text x="340" y="${RY+78}" fill="#67709a" font-size="12">${h1.length>1?`${h1.length-1} shorter loop${h1.length>2?'s':''} below it — that is the sampling, not the shape`:'no competing short bars — a clean signal'}</text>`);
+  }
+
+  document.getElementById('art').innerHTML=g.join('');
+  document.getElementById('epstxt').textContent = `ε = ${eps.toFixed(3)}`;
+}
+
+function drawBars(g, dim, top, panelH, color, label, bx){
+  g.push(`<text x="${BX0}" y="${top-10}" fill="${color}" font-size="10" letter-spacing="1.4">${label}</text>`);
+  const eps=st.epsFrac*st.epsMax;
+  let bars=st.pers.pairs.filter(p=>p.dim===dim)
+    .map(p=>({...p, life:(p.death===Infinity?st.epsMax:p.death)-p.birth}));
+  if(dim===0) bars.sort((a,b)=> (a.death===Infinity?1:0)-(b.death===Infinity?1:0) || a.death-b.death);
+  else        bars.sort((a,b)=> b.life-a.life);
+  const N=Math.max(bars.length,1), rh=Math.min(9, panelH/N);
+  const maxLife=Math.max(1e-6,...bars.map(b=>b.life));
+  bars.forEach((p,i)=>{
+    const y=top+(i+0.5)*rh, x1=bx(p.birth), x2=bx(p.death===Infinity?st.epsMax:p.death);
+    const on=alive(p,eps);
+    const strong = dim===1 && p.life > 0.4*maxLife;
+    const op = on ? 1 : 0.34;
+    const wgt = (dim===1 && strong) ? Math.max(2.2, rh-3) : Math.max(1.4, rh-4);
+    g.push(`<line x1="${x1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${color}" stroke-opacity="${op}" stroke-width="${wgt.toFixed(1)}"/>`);
+    if(p.death===Infinity)  // arrowhead: outlives every scale
+      g.push(`<path d="M${x2.toFixed(1)} ${(y-3).toFixed(1)} L${(x2+6).toFixed(1)} ${y.toFixed(1)} L${x2.toFixed(1)} ${(y+3).toFixed(1)} Z" fill="${color}" fill-opacity="${op}"/>`);
+  });
+}
+
+/* ---------------- controls ---------------- */
+function recompute(){ st.pers=computePersistence(st.pts);
+  st.epsMax=Math.max(0.05, st.pers.maxPair*1.04); render(); }
+function stopSweep(){ if(st.timer){ clearInterval(st.timer); st.timer=null;
+  document.getElementById('sweep').textContent='Sweep ε →'; } }
+
+document.getElementById('preset').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...e.currentTarget.children].forEach(c=>c.setAttribute('aria-pressed', c===b));
+  stopSweep(); st.pts=gen(b.dataset.p); recompute();
+});
+document.getElementById('eps').addEventListener('input', e=>{
+  stopSweep(); st.epsFrac=+e.target.value/1000; render();
+});
+document.getElementById('trace').addEventListener('change', e=>{ st.trace=e.target.checked; render(); });
+document.getElementById('clear').addEventListener('click', ()=>{
+  stopSweep(); st.pts=[]; [...document.querySelectorAll('#preset button')].forEach(c=>c.setAttribute('aria-pressed','false'));
+  recompute();
+});
+document.getElementById('sweep').addEventListener('click', ()=>{
+  if(st.timer){ stopSweep(); return; }
+  if(REDUCED){ st.epsFrac=0.45; document.getElementById('eps').value=450; render(); return; }
+  document.getElementById('sweep').textContent='Pause';
+  st.epsFrac=0; let v=0;
+  st.timer=setInterval(()=>{
+    v+=8; if(v>1000){ v=1000; stopSweep(); }
+    st.epsFrac=v/1000; document.getElementById('eps').value=v; render();
+  }, 26);
+});
+
+document.getElementById('stage').addEventListener('pointerdown', e=>{
+  const svg=document.getElementById('stage'), r=svg.getBoundingClientRect();
+  const px=(e.clientX-r.left)*(W/r.width), py=(e.clientY-r.top)*(H/r.height);
+  if(px<CX0||px>CX0+CS||py<CY0||py>CY0+CS) return;   // only inside the cloud panel
+  stopSweep();
+  const u=(px-CX0)/CS, v=(py-CY0)/CS;
+  let hit=-1, best=12;
+  st.pts.forEach((p,i)=>{ const d=Math.hypot(sx(p[0])-px, sy(p[1])-py); if(d<best){best=d;hit=i;} });
+  if(hit>=0) st.pts.splice(hit,1); else st.pts.push([u,v]);
+  [...document.querySelectorAll('#preset button')].forEach(c=>c.setAttribute('aria-pressed','false'));
+  recompute();
+});
+
+st.pts=gen('circle'); recompute();
+})();
+</script>
+</body>
+</html>

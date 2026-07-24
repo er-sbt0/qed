@@ -35,7 +35,7 @@ Respond with ONE JSON object:
 {"topic": "<canonical name of the concept>",
  "summary": "<2-4 sentences: the statement + the ESSENCE of why it holds; plain text, KaTeX allowed>",
  "visualize": true | false,
- "disciplines": ["automata"|"probability"|"calculus"|"linear-algebra"|"abstract-algebra"|"graphs", ...],
+ "disciplines": ["automata"|"probability"|"calculus"|"linear-algebra"|"abstract-algebra"|"graphs"|"topology", ...],
  "beats": [{"title":"<the line the student READS at this beat>","claim":"<the ONE idea this beat makes visible>"}]}
 
 A beat's "title" is shown ON SCREEN: the student pages through the explanation and reads that line
@@ -59,9 +59,12 @@ that continuity — it is what makes the explanation land.
   abstract-algebra: finite groups as words in generators, Cayley graphs/tables, cosets,
     quotients (rides the automata primitives: elements are word classes, the graph is a machine).
   graphs: undirected/weighted graphs, walks, BFS, spanning trees, structure maps between graphs.
+  topology: product/box topologies, open sets as masks, compactness, coordinate racks — no pack;
+    it composes from the geometry kernel (the View.diagram escape hatch), with the coordinate-rack
+    example. Pick it for point-set/product-space questions the other packs do not model.
 An empty list is a REAL answer, not a failure: it means no pack fits (number theory,
-combinatorics beyond graphs, geometry) and the program will compose the explanation from
-the geometry kernel instead. Do not stretch a pack to cover a topic it does not model.
+combinatorics beyond graphs) and the program will compose the explanation from the geometry
+kernel instead. Do not stretch a pack to cover a topic it does not model.
 
 "visualize": false only when a live picture would genuinely add nothing (a definition, a naming
 question, pure arithmetic). Then the summary alone is the answer and no program is generated.

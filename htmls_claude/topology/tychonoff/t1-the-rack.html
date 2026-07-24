@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The rack and the mask — what an open set can see</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c101d; --panel:#141a2c; --rule:#26304d; --grid:#1a2137;
+    --free:#f0b24a; --pin:#8ea2ff; --esc:#5fe3b0; --box:#ff5f7e;
+    --text:#dde2f0; --dim:#7f89a8; --faint:#4d5675;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text)}
+  body{font-family:Spectral,Georgia,serif;font-weight:300;padding:34px 22px 70px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+  h1{font-size:clamp(26px,4.4vw,40px);font-weight:300;letter-spacing:-.015em;margin:0 0 12px}
+  h1 em{font-style:italic;color:var(--free);font-weight:400}
+  .lede{max-width:64ch;color:#b9c1d6;font-size:17px;margin:0 0 26px}
+  i.v{font-style:italic;color:var(--text)}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 6px 0;overflow:hidden}
+  svg{display:block;width:100%;height:auto;touch-action:none}
+  svg text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .rack{display:flex;flex-wrap:wrap;gap:22px 30px;align-items:flex-end;border:1px solid var(--rule);border-top:none;background:#111627;padding:16px 18px 18px}
+  .grp{display:flex;flex-direction:column;gap:8px}
+  .grp>span{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .seg{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+  button{font-family:'IBM Plex Mono',monospace;font-size:12px;background:transparent;color:var(--dim);border:0;padding:8px 13px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button+button{border-left:1px solid var(--rule)}
+  button:hover{color:var(--text);background:#1b2238}
+  button[aria-pressed="true"]{background:var(--free);color:#171204}
+  #modeseg button[data-m="box"][aria-pressed="true"]{background:var(--box);color:#2a0a10}
+  .act{border:1px solid var(--rule);border-radius:2px}
+  .act.hot{border-color:var(--free);color:var(--free)}
+  button:focus-visible{outline:2px solid var(--pin);outline-offset:2px}
+  figcaption{margin-top:16px;color:var(--dim);font-size:14.5px;max-width:70ch}
+  .blocks{margin-top:34px;border-top:1px solid var(--rule);padding-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 26px}
+  .blocks div{font-size:14.5px;color:#a8b1c8}
+  .blocks b{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--free);margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Tychonoff · scene I — the myopia of the product topology</p>
+  <h1>An open set can only ever pin down <em>finitely many</em> coordinates.</h1>
+  <p class="lede">A point of {0,1}<sup>ℕ</sup> is an infinite row of switches. A basic open set is a mask: a few switches clamped, and <em>every other one left wide open</em> — the loud amber columns, which is where almost all the content is. Click the strip under a column to clamp or release it. Then throw the box switch and watch the count go to infinity.</p>
+
+  <figure>
+    <div class="board">
+      <svg id="stage" viewBox="0 0 940 486" role="img" aria-label="A long receding row of two-state coordinate slots, most free, a few clamped.">
+        <g id="art"></g>
+      </svg>
+    </div>
+    <div class="rack">
+      <div class="grp"><span>topology</span>
+        <div class="seg" id="modeseg">
+          <button data-m="product" aria-pressed="true">product</button>
+          <button data-m="box" aria-pressed="false">box</button>
+        </div>
+      </div>
+      <div class="grp"><span>the far end</span><button class="act hot" id="jump">Jump to coordinate 10,000</button></div>
+      <div class="grp"><span>the mask</span><button class="act" id="clear">Release everything</button></div>
+      <div class="grp"><span>&nbsp;</span><button class="act" id="rand">Clamp five at random</button></div>
+    </div>
+    <figcaption>Click a cell to move the point; click the strip below a column to cycle it free → clamp 0 → clamp 1 → free. The mask is drawn over the whole row, all the way out — the columns only get thinner because the paper runs out, not because the coordinates do.</figcaption>
+  </figure>
+
+  <div class="blocks">
+    <div><b>the rack</b>Widths recede geometrically. The terminal glyph is a control, not an ellipsis — press it and coordinate 10,000 turns out to look exactly like coordinate 3.</div>
+    <div><b>the mask</b>Free columns are rendered loudest. Every naive drawing dims them, which inverts the meaning: freedom is the content of the theorem.</div>
+    <div><b>the count</b>One number carries the whole scene. Finite in the product topology, infinite in the box. Everything else is commentary.</div>
+    <div><b>the box beat</b>Clamp all of them and the open set has exactly one point in it. Singletons open, uncountably many of them, no finite subcover — Tychonoff dies precisely here.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const W=940, H=486, LEFT=64, AVAIL=784, NSL=30, RR=0.93;
+const TOP=92, CH=78, GAP=7;              // cell height / gap between the two cells
+const Y1=TOP, Y0=TOP+CH+GAP, BOT=Y0+CH;  // value-1 cell, value-0 cell
+const STRIP=BOT+12, SH=18;
+
+const hash = k => { let h=Math.imul(k^0x9e3779b9, 2654435761)>>>0; return ((h>>>9)&0xffff)/65536; };
+
+// slot widths recede geometrically; xs[k] is the left edge of column k
+const ws=[], xs=[]; {
+  let s=0; for(let k=0;k<NSL;k++){ ws.push(Math.pow(RR,k)); s+=ws[k]; }
+  let x=LEFT; for(let k=0;k<NSL;k++){ ws[k]=ws[k]/s*AVAIL; xs.push(x); x+=ws[k]; }
+}
+const TAILX = LEFT+AVAIL+8;
+
+const st = {
+  mode:'product',
+  base:0,                                   // index of the leftmost displayed coordinate
+  pin:new Map(),                            // absolute coordinate index -> 0 | 1
+  pt:new Map()                              // absolute coordinate index -> 0 | 1
+};
+const idx = k => st.base + k;
+const ptAt = i => st.pt.has(i) ? st.pt.get(i) : (hash(i+777) > 0.5 ? 1 : 0);
+const pinAt = i => st.mode==='box' ? (st.pin.has(i) ? st.pin.get(i) : (hash(i+31)>0.5?1:0))
+                                   : (st.pin.has(i) ? st.pin.get(i) : null);
+
+function render(){
+  const g=[], boxy = st.mode==='box';
+  const AC = boxy ? 'var(--box)' : 'var(--pin)';
+
+  g.push(`<rect x="${LEFT-26}" y="${TOP-46}" width="${W-2*(LEFT-26)}" height="${STRIP+SH+42-TOP+46}" fill="#10162a" stroke="#20283f"/>`);
+  g.push(`<text x="${LEFT-26}" y="${TOP-56}" fill="#4d5675" font-size="10" letter-spacing="2.2">THE COORDINATE RACK — {0,1} IN EVERY SLOT</text>`);
+  g.push(`<text x="${W-(LEFT-26)}" y="${TOP-56}" fill="#4d5675" font-size="10" letter-spacing="1.6" text-anchor="end">A POINT IS ONE CHOICE PER SLOT</text>`);
+  g.push(`<text x="${LEFT-32}" y="${Y1+CH/2+4}" fill="#67709a" font-size="12" text-anchor="end">1</text>`);
+  g.push(`<text x="${LEFT-32}" y="${Y0+CH/2+4}" fill="#67709a" font-size="12" text-anchor="end">0</text>`);
+
+  let teeth=0, firstFail=-1;
+  for(let k=0;k<NSL;k++){
+    const i=idx(k), w=ws[k], x=xs[k], pv=ptAt(i), pin=pinAt(i);
+    const inner=Math.max(1.5, w-2.2);
+    if(pin!==null) teeth++;
+    if(pin!==null && pin!==pv && firstFail<0) firstFail=i;
+
+    [[1,Y1],[0,Y0]].forEach(([val,y])=>{
+      let fill, op, stroke='none';
+      if(pin===null){ fill='var(--free)'; op=.72; }                 // free: both cells loud
+      else if(pin===val){ fill=AC; op=.62; }                        // the clamped value
+      else { fill='#0a0e18'; op=1; stroke='#1d2439'; }              // excluded
+      g.push(`<rect x="${x+1.1}" y="${y}" width="${inner}" height="${CH}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}"/>`);
+      if(pin!==null && pin!==val && w>9)
+        g.push(`<line x1="${x+3}" y1="${y+CH/2-4}" x2="${x+w-3}" y2="${y+CH/2+4}" stroke="#2b3450"/>`);
+    });
+
+    // the point: one marker per slot
+    const py = (pv===1?Y1:Y0)+CH/2;
+    const bad = pin!==null && pin!==pv;
+    g.push(`<circle cx="${x+w/2}" cy="${py}" r="${Math.min(5.5, Math.max(1.8, w/5))}"
+            fill="${bad?'var(--box)':'#0c101d'}" stroke="${bad?'#0c101d':'#0c101d'}" stroke-width="1"/>`);
+    g.push(`<circle cx="${x+w/2}" cy="${py}" r="${Math.min(3.4, Math.max(1, w/8))}" fill="${bad?'#0c101d':'var(--esc)'}"/>`);
+
+    // the tooth strip
+    g.push(`<rect x="${x+1.1}" y="${STRIP}" width="${inner}" height="${SH}"
+            fill="${pin===null?'#161d31':AC}" fill-opacity="${pin===null?1:.85}" stroke="#1d2439"/>`);
+    if(pin!==null && w>11)
+      g.push(`<text x="${x+w/2}" y="${STRIP+13}" fill="#0c101d" font-size="10.5" text-anchor="middle">${pin}</text>`);
+    if(w>17)
+      g.push(`<text x="${x+w/2}" y="${STRIP+SH+16}" fill="#4d5675" font-size="9.5" text-anchor="middle">${i}</text>`);
+  }
+
+  // the terminal glyph — a control, not an ellipsis
+  g.push(`<rect x="${TAILX}" y="${Y1}" width="${W-LEFT+26-TAILX-26}" height="${BOT-Y1}" fill="#131a2e" stroke="#232c46" stroke-dasharray="3 3"/>`);
+  g.push(`<text x="${TAILX+26}" y="${(Y1+BOT)/2-4}" fill="${boxy?'var(--box)':'var(--free)'}" font-size="20">⋯</text>`);
+  g.push(`<text x="${TAILX+22}" y="${(Y1+BOT)/2+18}" fill="#67709a" font-size="9.5">forever</text>`);
+
+  /* ---------------- the count, and what follows from it ---------------- */
+  const RY = STRIP+SH+62;
+  const teethTxt = boxy ? '∞' : String(teeth);
+  g.push(`<text x="${LEFT-26}" y="${RY}" fill="#8792b3" font-size="11.5" letter-spacing="2">CLAMPED COORDINATES</text>`);
+  g.push(`<text x="${LEFT-26}" y="${RY+52}" fill="${boxy?'var(--box)':'var(--pin)'}" font-size="46">${teethTxt}</text>`);
+  g.push(`<text x="${LEFT+96}" y="${RY+52}" fill="#67709a" font-size="12">${boxy?'every single one' : 'always finite, however you click'}</text>`);
+
+  const cx = 430;
+  g.push(`<text x="${cx}" y="${RY}" fill="#8792b3" font-size="11.5" letter-spacing="2">POINTS IN THIS OPEN SET</text>`);
+  g.push(`<text x="${cx}" y="${RY+30}" fill="${boxy?'var(--box)':'var(--free)'}" font-size="15">${
+    boxy ? 'exactly one — the mask names the point' : 'uncountably many — a whole continuum'}</text>`);
+  g.push(`<text x="${cx}" y="${RY+52}" fill="#67709a" font-size="12">${
+    boxy ? 'so {p} is open, so the space is discrete' : 'the free slots alone supply that many'}</text>`);
+  if(boxy){
+    g.push(`<text x="${cx}" y="${RY+74}" fill="var(--box)" font-size="12">discrete + uncountable ⇒ the cover by singletons has no finite subcover</text>`);
+  } else if(firstFail<0){
+    g.push(`<text x="${cx}" y="${RY+74}" fill="var(--esc)" font-size="12">membership: the point lies inside the mask</text>`);
+  } else {
+    g.push(`<text x="${cx}" y="${RY+74}" fill="var(--box)" font-size="12">membership: outside — it fails at coordinate ${firstFail}</text>`);
+  }
+
+  document.getElementById('art').innerHTML=g.join('');
+}
+
+/* ---------------- interaction ---------------- */
+const svg=document.getElementById('stage');
+function slotAt(px){
+  for(let k=0;k<NSL;k++) if(px>=xs[k] && px<xs[k]+ws[k]) return k;
+  return -1;
+}
+svg.addEventListener('pointerdown', e=>{
+  const r=svg.getBoundingClientRect();
+  const px=(e.clientX-r.left)*(W/r.width), py=(e.clientY-r.top)*(H/r.height);
+  if(px>=TAILX && py>=Y1 && py<=BOT){ jump(); return; }
+  const k=slotAt(px); if(k<0) return;
+  const i=idx(k);
+  if(py>=STRIP && py<=STRIP+SH){                       // cycle the clamp
+    if(st.mode==='box') return;
+    const cur = st.pin.has(i) ? st.pin.get(i) : null;
+    if(cur===null) st.pin.set(i,0); else if(cur===0) st.pin.set(i,1); else st.pin.delete(i);
+    render();
+  } else if(py>=Y1 && py<=BOT){                        // move the point
+    st.pt.set(i, py < (Y1+CH+GAP/2) ? 1 : 0);
+    render();
+  }
+});
+
+function jump(){
+  st.base = st.base===0 ? 9986 : 0;
+  document.getElementById('jump').textContent =
+    st.base===0 ? 'Jump to coordinate 10,000' : 'Back to coordinate 0';
+  render();
+}
+document.getElementById('jump').addEventListener('click', jump);
+document.getElementById('clear').addEventListener('click', ()=>{ st.pin.clear(); render(); });
+document.getElementById('rand').addEventListener('click', ()=>{
+  st.pin.clear();
+  const picks=new Set();
+  while(picks.size<5) picks.add(Math.floor(Math.random()*12));
+  picks.forEach(k=>st.pin.set(idx(k), Math.random()>0.5?1:0));
+  render();
+});
+document.getElementById('modeseg').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  st.mode=b.dataset.m;
+  [...e.currentTarget.children].forEach(c=>c.setAttribute('aria-pressed', c===b));
+  render();
+});
+
+st.pin.set(2,1); st.pin.set(5,0); st.pin.set(9,1);
+render();
+})();
+</script>
+</body>
+</html>
