@@ -51,6 +51,18 @@ export interface CoordFrame {
   yTicks(target?: number): number[];
   /** `count` evenly-spaced vertical bands across the inner pixel width. */
   bands(count: number, opts?: BandOpts): readonly Band[];
+  /**
+   * Math-x of column `k` of `n` evenly-spaced columns across the DOMAIN — the
+   * math-space counterpart of a band centre, in domain units. The single source
+   * of the column arithmetic the diagram pen used to re-derive.
+   */
+  colX(k: number, n: number): number;
+  /**
+   * `count` vertical bands across the DOMAIN, in math (not pixel) units — the
+   * math-space counterpart of `bands`. Same `{center, lo, hi, width}` shape, so
+   * an author feeds the numbers straight back into `pen.*`.
+   */
+  mathBands(count: number, opts?: BandOpts): readonly Band[];
 }
 
 export interface FrameOpts {
@@ -70,6 +82,12 @@ export interface Band {
 export interface BandOpts {
   /** Fraction of each slot reserved as the gap between bands (0..1). Default 0.2. */
   readonly padding?: number;
+  /**
+   * A per-column shrink ratio in (0, 1). When set, successive bands get
+   * geometrically smaller widths — the "runs off toward forever" recession —
+   * still spanning the full extent. Omitted (or ≥ 1) means equal spacing.
+   */
+  readonly recede?: number;
 }
 
 export function createFrame(
@@ -98,28 +116,55 @@ export function createFrame(
     backdrop: opts.backdrop ?? ((): string => ''),
     xTicks: (target = 5): number[] => niceTicks(domain[0], domain[1], target),
     yTicks: (target = 5): number[] => niceTicks(range[0], range[1], target),
-    bands: (count: number, bandOpts: BandOpts = {}): readonly Band[] => bandsOf(pad, innerW, count, bandOpts),
+    bands: (count: number, bandOpts: BandOpts = {}): readonly Band[] => layoutBands(pad, innerW, count, bandOpts),
+    colX: (k: number, n: number): number => d0 + ((k + 0.5) * dSpan) / Math.max(1, n),
+    mathBands: (count: number, bandOpts: BandOpts = {}): readonly Band[] => layoutBands(d0, dSpan, count, bandOpts),
   });
 }
 
 /**
- * `count` evenly-spaced vertical bands across an inner pixel span — the
- * discrete counterpart to `xTicks`/`yTicks`. Used for side-by-side coordinate
- * columns (a rack of frames) rather than a continuous axis.
+ * `count` vertical bands laid out across a span `[origin, origin + total]` — the
+ * discrete counterpart to `xTicks`/`yTicks`. One layout, called in two spaces:
+ * pixels (`bands`, origin = pad) and domain units (`mathBands`, origin = d0).
+ * Used for side-by-side coordinate columns (a rack of frames) rather than a
+ * continuous axis. With `recede`, slot widths shrink geometrically instead of
+ * evenly, still spanning `total`.
  */
-function bandsOf(pad: number, innerW: number, count: number, opts: BandOpts): readonly Band[] {
+function layoutBands(origin: number, total: number, count: number, opts: BandOpts): readonly Band[] {
   const n = Math.max(1, Math.floor(count));
   const inner = Math.min(0.9, Math.max(0, opts.padding ?? 0.2));
-  const slot = innerW / n;
-  const width = slot * (1 - inner);
-  const gap = slot * inner;
+  const slots = slotWidths(total, n, opts.recede);
   const out: Band[] = [];
+  let x = origin;
   for (let i = 0; i < n; i += 1) {
-    const lo = pad + i * slot + gap / 2;
+    const slot = slots[i]!;
+    const width = slot * (1 - inner);
+    const gap = slot * inner;
+    const lo = x + gap / 2;
     const hi = lo + width;
     out.push({ center: (lo + hi) / 2, lo, hi, width });
+    x += slot;
   }
   return out;
+}
+
+/**
+ * The `n` slot widths that partition `total`. Equal by default; with a recede
+ * ratio r ∈ (0, 1) they form a geometric sequence w, wr, wr², … whose sum is
+ * `total` (so `w = total·(1−r)/(1−rⁿ)`) — the row narrowing toward "forever".
+ */
+function slotWidths(total: number, n: number, recede?: number): number[] {
+  if (recede !== undefined && recede > 0 && recede < 1) {
+    const first = (total * (1 - recede)) / (1 - recede ** n);
+    const out: number[] = [];
+    let w = first;
+    for (let i = 0; i < n; i += 1) {
+      out.push(w);
+      w *= recede;
+    }
+    return out;
+  }
+  return Array.from({ length: n }, () => total / n);
 }
 
 /**

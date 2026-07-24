@@ -114,3 +114,52 @@ describe('frame.bands', () => {
     expect(b!.center).toBeCloseTo(160, 6); // (20 + 300) / 2
   });
 });
+
+describe('frame.colX', () => {
+  it('places column k of n at the band centre, in DOMAIN units', () => {
+    const frame = createFrame([0, 10], [0, 1]);
+    // 5 columns across [0,10]: centres at 1,3,5,7,9 (math, not pixels)
+    expect([0, 1, 2, 3, 4].map((k) => frame.colX(k, 5))).toEqual([1, 3, 5, 7, 9]);
+  });
+
+  it('honours a shifted domain — column 0 sits half a slot in from d0', () => {
+    const frame = createFrame([2, 6], [0, 1]);
+    expect(frame.colX(0, 4)).toBeCloseTo(2.5, 9); // 2 + 0.5 * (4/4)
+    expect(frame.colX(3, 4)).toBeCloseTo(5.5, 9);
+  });
+});
+
+describe('frame.mathBands', () => {
+  it('returns bands in DOMAIN units spanning the domain, not pixels', () => {
+    const frame = createFrame([0, 10], [0, 1], { width: 320, pad: 20 });
+    const bands = frame.mathBands(5);
+    expect(bands).toHaveLength(5);
+    expect(bands[0]!.center).toBeCloseTo(1, 9);
+    expect(bands[4]!.center).toBeCloseTo(9, 9);
+    // math-space: strictly inside [0,10], nowhere near the pixel pad (20)
+    expect(bands[0]!.lo).toBeGreaterThanOrEqual(0);
+    expect(bands[4]!.hi).toBeLessThanOrEqual(10);
+  });
+
+  it('recede shrinks each successive band, still spanning the domain', () => {
+    const frame = createFrame([0, 1], [0, 1]);
+    const bands = frame.mathBands(6, { recede: 0.86 });
+    // widths strictly decrease left to right
+    for (let i = 1; i < bands.length; i += 1) {
+      expect(bands[i]!.width).toBeLessThan(bands[i - 1]!.width);
+      expect(bands[i]!.width / bands[i - 1]!.width).toBeCloseTo(0.86, 6);
+    }
+    // still spans the domain: first band starts near d0, last ends near d1
+    expect(bands[0]!.lo).toBeGreaterThanOrEqual(0);
+    expect(bands[5]!.hi).toBeLessThanOrEqual(1);
+    expect(bands[5]!.hi).toBeGreaterThan(0.9); // the tail reaches the far edge
+  });
+
+  it('recede omitted is equal spacing, identical to the default', () => {
+    const frame = createFrame([0, 1], [0, 1]);
+    const equal = frame.mathBands(4);
+    for (let i = 1; i < equal.length; i += 1) {
+      expect(equal[i]!.width).toBeCloseTo(equal[0]!.width, 9);
+    }
+  });
+});

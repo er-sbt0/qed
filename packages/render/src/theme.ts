@@ -314,6 +314,10 @@ export const THEME_CSS = `
 .mr-mark-point { fill: currentColor; stroke: none; }
 .mr-mark-path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .mr-mark-path.mr-filled { fill: currentColor; fill-opacity: 0.18; }
+/* band idiom: a soft column-cell. When filled, drop the hard outline and fade
+   the fill further, so the strip reads as a faint cell behind the marks rather
+   than a boxed rectangle; an unfilled band keeps the base stroke as an outline. */
+.mr-mark-path.mr-band.mr-filled { stroke: none; fill-opacity: 0.1; }
 .mr-mark-text { fill: currentColor; font-size: 11px; }
 .mr-mark-glyph { fill: currentColor; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .mr-mark-glyph.mr-ring, .mr-mark-glyph.mr-cross, .mr-mark-glyph.mr-arrow { fill: none; }

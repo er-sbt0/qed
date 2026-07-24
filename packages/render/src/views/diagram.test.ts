@@ -235,3 +235,70 @@ describe('DiagramView — mounted paint', () => {
     expect(text.attrs.get('text-anchor')).toBe('middle');
   });
 });
+
+describe('DiagramView — band idiom', () => {
+  it('emits a closed, filled strip node with the band class', () => {
+    const { stage } = setup();
+    const view = new DiagramView(stage, {
+      frame: { domain: [0, 1], range: [0, 1] },
+      draw: (pen) => pen.band(0.5, { role: 'free' }),
+    });
+    // the record is a path mark of four corners (a rectangle)
+    const marks = view.collect();
+    expect(marks).toHaveLength(1);
+    expect(marks[0]!.type).toBe('path');
+    expect(marks[0]!.points).toHaveLength(4);
+    expect(marks[0]!.role).toBe('free');
+    // mounted: a filled band node whose path closes (Z)
+    const root = asFake(view.mount(fakeDoc()));
+    const strips = allWithClass(root, 'mr-band');
+    expect(strips).toHaveLength(1);
+    expect(strips[0]!.classes.has('mr-filled')).toBe(true);
+    expect(strips[0]!.classes.has('mr-role-free')).toBe(true);
+    expect(strips[0]!.attrs.get('d')).toContain('Z');
+  });
+
+  it('fill:false leaves an outlined strip, no fill class', () => {
+    const { stage } = setup();
+    const view = new DiagramView(stage, {
+      frame: { domain: [0, 1], range: [0, 1] },
+      draw: (pen) => pen.band(0.5, { fill: false }),
+    });
+    const root = asFake(view.mount(fakeDoc()));
+    const strips = allWithClass(root, 'mr-band');
+    expect(strips).toHaveLength(1);
+    expect(strips[0]!.classes.has('mr-filled')).toBe(false);
+  });
+});
+
+describe('DiagramView — marker idiom', () => {
+  const cases: Array<[import('./diagram.js').MarkerState, string]> = [
+    ['free', 'mr-role-free'],
+    ['constrained', 'mr-role-neutral'],
+    ['violated', 'mr-role-reject'],
+    ['plain', 'mr-role-neutral'],
+  ];
+  for (const [state, cls] of cases) {
+    it(`maps state '${state}' → ${cls} on the dot`, () => {
+      const { stage } = setup();
+      const view = new DiagramView(stage, {
+        frame: { domain: [0, 1], range: [0, 1] },
+        draw: (pen) => pen.marker(0.5, 0.5, { state }),
+      });
+      const root = asFake(view.mount(fakeDoc()));
+      const dots = allWithClass(root, 'mr-dot');
+      expect(dots).toHaveLength(1);
+      expect(dots[0]!.classes.has(cls)).toBe(true);
+    });
+  }
+
+  it('draws a dot glyph underneath (kernel stays visible in the record)', () => {
+    const { stage } = setup();
+    const view = new DiagramView(stage, {
+      frame: { domain: [0, 1], range: [0, 1] },
+      draw: (pen) => pen.marker(0.3, 0.7, { state: 'violated' }),
+    });
+    const marks = view.collect();
+    expect(marks[0]).toMatchObject({ type: 'glyph', glyph: 'dot', role: 'reject', at: [0.3, 0.7] });
+  });
+});

@@ -55,6 +55,9 @@ export interface PathOpts extends MarkOpts {
 }
 export interface TextOpts extends MarkOpts {
   readonly anchor?: 'start' | 'middle' | 'end';
+  /** Font size in pixels. Omitted = the stage default (a small label). Raise it
+   *  for a headline number — the ∞ a scene turns on wants to be big. */
+  readonly size?: number;
 }
 export interface GlyphOpts extends MarkOpts {
   /** Half-extent in pixels. Default 4. */
@@ -64,6 +67,14 @@ export interface GlyphOpts extends MarkOpts {
 }
 
 export type GlyphKind = 'dot' | 'cross' | 'ring' | 'arrow';
+
+/**
+ * The SEMANTIC state of a point, one level above a raw colour role — the
+ * distinction the rack lesson was hand-mapping (`role: bad ? 'reject' : …`).
+ * `marker` turns it into the role: free→amber, constrained/plain→neutral,
+ * violated→red.
+ */
+export type MarkerState = 'free' | 'constrained' | 'violated' | 'plain';
 
 /** A band in MATH-SPACE — the author feeds `center`/`lo`/`hi` back into `pen.*`. */
 export interface MathBand {
@@ -76,6 +87,34 @@ export interface MathBand {
 export interface BandOpts {
   /** Fraction of each slot reserved as the gap between bands (0..1). Default 0.2. */
   readonly padding?: number;
+  /**
+   * A per-column shrink ratio in (0, 1): successive bands get geometrically
+   * smaller widths (the receding "forever" tail), still spanning the domain.
+   * Omitted = equal spacing.
+   */
+  readonly recede?: number;
+}
+
+/** Options for `pen.band` — a vertical strip/column-cell centred at a math-x. */
+export interface BandMarkOpts extends MarkOpts {
+  /** Strip width in DOMAIN units. Default: 6% of the domain span. */
+  readonly width?: number;
+  /** Bottom of the strip, in range units. Default: 12% up from the range floor. */
+  readonly y0?: number;
+  /** Top of the strip, in range units. Default: 12% down from the range ceiling. */
+  readonly y1?: number;
+  /** Faintly fill the strip so it reads as a cell, not a bare outline. Default true. */
+  readonly fill?: boolean;
+}
+
+/** Options for `pen.marker` — a point dot coloured by its semantic state. */
+export interface MarkerOpts {
+  /** The semantic state that picks the colour. Default 'plain'. */
+  readonly state?: MarkerState;
+  /** Dot radius in pixels. Default 5. */
+  readonly size?: number;
+  /** Register the dot under a semantic handle, so narration can light it. */
+  readonly under?: Handle;
 }
 
 /**
@@ -102,6 +141,18 @@ export interface DiagramPen {
   path(points: ReadonlyArray<readonly [number, number]>, opts?: PathOpts): void;
   text(x: number, y: number, str: string, opts?: TextOpts): void;
   glyph(x: number, y: number, kind: GlyphKind, opts?: GlyphOpts): void;
+
+  // ── idioms (compose from the kernel above) ──
+  /**
+   * A vertical strip/column-cell centred at math-x `x`, from `y0` to `y1` — a
+   * soft, faintly-filled band so a rack column reads as a CELL, not a bare line.
+   */
+  band(x: number, opts?: BandMarkOpts): void;
+  /**
+   * A point dot whose colour comes from a semantic STATE rather than a raw
+   * role: free→amber, constrained/plain→neutral, violated→red.
+   */
+  marker(x: number, y: number, opts?: MarkerOpts): void;
 }
 
 /** A recorded mark, in MATH-SPACE — the headless test surface (`view.collect()`). */
@@ -199,6 +250,14 @@ export class DiagramView extends FramedView {
   }
 }
 
+/** Semantic point-state → colour role. The mapping `pen.marker` applies. */
+const MARKER_ROLE: Record<MarkerState, MarkRole> = {
+  free: 'free',
+  constrained: 'neutral',
+  violated: 'reject',
+  plain: 'neutral',
+};
+
 class DiagramPenImpl implements DiagramPen {
   readonly id: string;
   readonly kind = 'diagram:pen' as const;
@@ -237,25 +296,11 @@ class DiagramPenImpl implements DiagramPen {
     if (count === undefined || count < 1) {
       throw new Error('pen.col(k, n) needs a column count — pass n, or set frame.cols.');
     }
-    const [d0, d1] = this.frame.domain;
-    return d0 + ((k + 0.5) * (d1 - d0)) / count;
+    return this.frame.colX(k, count);
   }
 
   bands(count: number, opts: BandOpts = {}): readonly MathBand[] {
-    const n = Math.max(1, Math.floor(count));
-    const [d0, d1] = this.frame.domain;
-    const span = d1 - d0;
-    const inner = Math.min(0.9, Math.max(0, opts.padding ?? 0.2));
-    const slot = span / n;
-    const width = slot * (1 - inner);
-    const gap = slot * inner;
-    const out: MathBand[] = [];
-    for (let i = 0; i < n; i += 1) {
-      const lo = d0 + i * slot + gap / 2;
-      const hi = lo + width;
-      out.push({ center: (lo + hi) / 2, lo, hi, width });
-    }
-    return out;
+    return this.frame.mathBands(count, opts);
   }
 
   xTicks(target?: number): number[] {
@@ -298,6 +343,7 @@ class DiagramPenImpl implements DiagramPen {
       el.setAttribute('x', this.frame.x(x).toFixed(2));
       el.setAttribute('y', this.frame.y(y).toFixed(2));
       el.setAttribute('text-anchor', opts?.anchor ?? 'middle');
+      if (opts?.size !== undefined) el.setAttribute('font-size', String(opts.size));
       el.textContent = str;
     });
   }
@@ -358,6 +404,35 @@ class DiagramPenImpl implements DiagramPen {
         break;
       }
     }
+  }
+
+  // ── idioms ──
+
+  band(x: number, opts: BandMarkOpts = {}): void {
+    const [d0, d1] = this.frame.domain;
+    const [r0, r1] = this.frame.range;
+    const w = opts.width ?? (d1 - d0) * 0.06;
+    const y0 = opts.y0 ?? r0 + (r1 - r0) * 0.12;
+    const y1 = opts.y1 ?? r1 - (r1 - r0) * 0.12;
+    const hw = w / 2;
+    const pts: ReadonlyArray<readonly [number, number]> = [
+      [x - hw, y0],
+      [x + hw, y0],
+      [x + hw, y1],
+      [x - hw, y1],
+    ];
+    const fill = opts.fill !== false;
+    this.records.push({ type: 'path', role: opts.role ?? 'neutral', points: pts.map(([px, py]) => [px, py] as const) });
+    const classes = fill ? ['mr-mark-path', 'mr-band', 'mr-filled'] : ['mr-mark-path', 'mr-band'];
+    this.emit('path', classes, opts, (el) => {
+      const px = pts.map(([mx, my]) => [this.frame.x(mx), this.frame.y(my)] as const);
+      el.setAttribute('d', `${polyline(px)} Z`);
+    });
+  }
+
+  marker(x: number, y: number, opts: MarkerOpts = {}): void {
+    const role = MARKER_ROLE[opts.state ?? 'plain'];
+    this.glyph(x, y, 'dot', { role, size: opts.size ?? 5, under: opts.under });
   }
 
   private emit(

@@ -78,6 +78,10 @@ export type {
   GlyphOpts,
   GlyphKind,
   MathBand,
+  BandOpts,
+  BandMarkOpts,
+  MarkerOpts,
+  MarkerState,
 } from './views/diagram.js';
 export { HeatmapView } from './views/heatmap.js';
 export type { HeatmapSpec, HeatmapCell } from './views/heatmap.js';

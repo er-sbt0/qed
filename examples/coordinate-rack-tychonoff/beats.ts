@@ -1,33 +1,18 @@
 /**
  * The Coordinate Rack — Tychonoff Scene I.
  *
- * Hand-authored (roadmap step (c), docs/visual.md) to prove the View.diagram
- * geometry escape hatch inside qed's real pipeline: the figure is drawn
- * mark-by-mark in a named MATH-SPACE frame (no pixels), reads live signals
- * (a Parameter and an M.derived count), and the count -> infinity plus the
- * finiteness claim move under lesson.vary with no per-mark wiring — proof that
- * a captured draw closure survives the lint, the QuickJS authoring pass, and
- * the stepped player.
+ * Hand-authored (roadmap steps (c)/(d), docs/visual.md) to prove and then dress
+ * the View.diagram geometry escape hatch: the figure is drawn mark-by-mark in a
+ * named MATH-SPACE frame (no pixels), reads live signals (a Parameter and an
+ * M.derived count), and moves under lesson.vary with no per-mark wiring. The
+ * column/cell/marker idioms extracted in step (d) — pen.bands({recede}),
+ * pen.band, pen.marker — do the drawing; rackColumn below is the userland macro
+ * that composes them, the "idiom above the kernel" the corpus demonstrates.
  */
 
-// The product space {0,1}^N, drawn as a receding row of coordinate columns.
 const VIS = 7;
 const pv = [1, 0, 1, 1, 0, 1, 0]; // the point: one bit chosen in every coordinate
-
-// Column geometry, in math-space (domain and range are both [0,1]). Widths
-// shrink left-to-right so the row runs off the page toward a "forever" tail —
-// recession, not an ellipsis. Computed once; the draw closure only reads it.
-const centers: number[] = [];
-{
-  let x = 0.05;
-  let w = 0.165;
-  for (let k = 0; k < VIS; k += 1) {
-    centers.push(x + w / 2);
-    x += w + 0.014;
-    w *= 0.86;
-  }
-}
-const rowOne = 0.66; // y of the value-1 row
+const rowOne = 0.6; // y of the value-1 row
 const rowZero = 0.34; // y of the value-0 row
 const rowY = (bit: number): number => (bit ? rowOne : rowZero);
 
@@ -44,49 +29,48 @@ function pinAt(k: number): number | null {
 }
 
 // The number that carries the theorem: finite in the product topology, infinite
-// in the box. An M.derived, so every view that reads it moves when boxMode does.
+// in the box. An M.derived, so every view reading it moves when boxMode does.
 const clampedCount = M.derived(() => (isBox() ? Infinity : PRODUCT_PINS.length), "clamped coordinates");
 
+// The idiom: one coordinate column drawn as a cell — the receding strip, its
+// value rows, the pin ring on a clamped value, and the point marker (amber when
+// the coordinate is free, red if it ever contradicts a clamp). Composed from the
+// step-(d) pen idioms; this is the shape a lesson reaches for, dropping to the
+// kernel only for the labels.
+function rackColumn(pen, k: number, cx: number, width: number): void {
+  const pin = pinAt(k);
+  const free = pin === null;
+  pen.band(cx, { width, y0: 0.24, y1: 0.7, role: free ? "free" : "constraint" });
+  pen.text(cx, 0.17, String(k), { anchor: "middle", role: "neutral", size: 10.5 });
+  if (pin !== null) pen.glyph(cx, rowY(pin), "ring", { role: "constraint", size: 10 });
+  const bad = pin !== null && pin !== pv[k];
+  pen.marker(cx, rowY(pv[k]), { state: bad ? "violated" : free ? "free" : "constrained", size: 6 });
+}
+
 const rack = View.diagram(
-  { domain: [0, 1], range: [0, 1], width: 960, height: 340, pad: 14 },
+  { domain: [0, 1], range: [0, 1], width: 980, height: 380, pad: 18, cols: VIS },
   (pen) => {
-    pen.text(0.5, 0.92, "{0,1}^ℕ   —   the coordinate rack", { anchor: "middle" });
-    pen.text(0.03, rowOne, "1", { anchor: "end", role: "neutral" });
-    pen.text(0.03, rowZero, "0", { anchor: "end", role: "neutral" });
+    // value-row labels, once at the left margin
+    pen.text(0.035, rowOne, "1", { anchor: "end", role: "neutral", size: 12 });
+    pen.text(0.035, rowZero, "0", { anchor: "end", role: "neutral", size: 12 });
 
-    for (let k = 0; k < VIS; k += 1) {
-      const cx = centers[k];
-      const pin = pinAt(k);
-      const free = pin === null;
-      // The column's guide: loud amber where the coordinate is FREE (freedom is
-      // the content of the theorem), quiet blue where it is clamped.
-      pen.path(
-        [
-          [cx, 0.22],
-          [cx, 0.78],
-        ],
-        { role: free ? "free" : "constraint" },
-      );
-      pen.text(cx, 0.13, String(k), { anchor: "middle", role: "neutral" });
-      // The pin: a ring around the clamped value's cell.
-      if (pin !== null) pen.glyph(cx, rowY(pin), "ring", { role: "constraint", size: 13 });
-      // The point: a dot at its value here. Red if it disagreed with a clamp
-      // (it never does in this scene, but the mark is ready to say so).
-      const bad = pin !== null && pin !== pv[k];
-      pen.glyph(cx, rowY(pv[k]), "dot", { role: bad ? "reject" : free ? "free" : "neutral", size: 8 });
-    }
+    // the columns, receding toward "forever" — a control, not an ellipsis
+    const cols = pen.bands(VIS, { recede: 0.86, padding: 0.36 });
+    for (let k = 0; k < VIS; k += 1) rackColumn(pen, k, cols[k].center, cols[k].width);
 
-    // The receding tail: a control meaning "and so on, forever", not just "...".
-    pen.text(0.955, 0.5, "⋯", { anchor: "middle", role: "neutral" });
-    pen.text(0.955, 0.34, "forever", { anchor: "middle", role: "neutral" });
+    const tailX = cols[VIS - 1].center + cols[VIS - 1].width * 1.3;
+    pen.text(tailX, 0.47, "⋯", { anchor: "middle", role: "neutral", size: 20 });
+    pen.text(tailX, 0.17, "forever", { anchor: "middle", role: "neutral", size: 10.5 });
 
-    // The count, drawn big: a finite number, or the box topology's infinity.
-    pen.text(0.5, 0.04, `clamped coordinates:   ${isBox() ? "∞" : String(PRODUCT_PINS.length)}`, {
+    // the count, drawn big: the whole scene turns on it going finite → ∞
+    pen.text(0.5, 0.95, "clamped coordinates", { anchor: "middle", role: "neutral", size: 11.5 });
+    pen.text(0.5, 0.76, isBox() ? "∞" : String(PRODUCT_PINS.length), {
       anchor: "middle",
+      size: 52,
       role: isBox() ? "reject" : "neutral",
     });
   },
-  { label: "the coordinate rack" },
+  { label: "\\{0,1\\}^{\\mathbb{N}}\\ \\text{— the coordinate rack}" },
 );
 
 // Membership: the point lies inside the basic open set iff no clamped
@@ -116,7 +100,7 @@ lesson.say`A point of ${rack} is one choice of 0 or 1 in every coordinate — an
 lesson.show(rack);
 
 lesson.beat("A basic open set is a mask");
-lesson.say`A basic open set clamps a few coordinates (blue rings) and leaves all the rest wide open (amber). The openness is the freedom left behind.`;
+lesson.say`A basic open set clamps a few coordinates (blue, ringed) and leaves all the rest wide open (amber). The openness is the freedom left behind.`;
 
 lesson.beat("Count the constraints");
 lesson.say`In the product topology that clamp list is ${clampedCount} entries long — pin as many coordinates as you like, it stays finite.`;
